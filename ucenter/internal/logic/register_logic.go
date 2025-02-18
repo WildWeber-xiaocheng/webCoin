@@ -39,7 +39,7 @@ func (l *RegisterLogic) SendCode(in *register.CodeReq) (*register.NoRes, error) 
 	go func() {
 		logx.Info("调用短信平台发送验证码成功")
 	}()
-	logx.Infof("验证码为：%s", code)
+	logx.Infof("验证码为：%v", code)
 	//3.验证码存入redis
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
