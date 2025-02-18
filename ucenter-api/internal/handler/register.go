@@ -6,6 +6,7 @@ import (
 	"ucenter-api/internal/logic"
 	"ucenter-api/internal/svc"
 	"ucenter-api/internal/types"
+	common "webCoin-common"
 )
 
 type RegisterHandler struct {
@@ -27,9 +28,7 @@ func (h *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	l := logic.NewRegisterLogic(r.Context(), h.svcCtx)
 	resp, err := l.Register(&req)
-	if err != nil {
-		httpx.ErrorCtx(r.Context(), w, err)
-	} else {
-		httpx.OkJsonCtx(r.Context(), w, resp)
-	}
+	result := common.NewResult().Deal(resp, err)
+	//成功与否状态码都返回200
+	httpx.OkJsonCtx(r.Context(), w, result)
 }
