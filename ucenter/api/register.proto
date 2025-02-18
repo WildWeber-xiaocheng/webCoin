@@ -16,14 +16,25 @@ message RegReq {
   string superPartner = 8;
 }
 
+message RegRes {}
+
 //人机验证
 message CaptchaReq {
   string server = 1;
   string token = 2;
 }
 
-message RegRes {}
+//发送验证码
+message CodeReq {
+  string phone = 1;
+  string country = 2;
+}
+
+
+
+message NoRes {}
 
 service Register {
   rpc registerByPhone(RegReq) returns(RegRes);
+  rpc sendCode(CodeReq) returns(NoRes);
 }

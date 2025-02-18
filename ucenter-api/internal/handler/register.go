@@ -32,3 +32,16 @@ func (h *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 	//成功与否状态码都返回200
 	httpx.OkJsonCtx(r.Context(), w, result)
 }
+
+func (h *RegisterHandler) SendCode(w http.ResponseWriter, r *http.Request) {
+	var req types.CodeRequest
+	if err := httpx.ParseJsonBody(r, &req); err != nil {
+		httpx.ErrorCtx(r.Context(), w, err)
+		return
+	}
+	l := logic.NewRegisterLogic(r.Context(), h.svcCtx)
+	resp, err := l.SendCode(&req)
+	result := common.NewResult().Deal(resp, err)
+	//成功与否状态码都返回200
+	httpx.OkJsonCtx(r.Context(), w, result)
+}

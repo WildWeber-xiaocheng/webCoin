@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RegisterClient interface {
 	RegisterByPhone(ctx context.Context, in *RegReq, opts ...grpc.CallOption) (*RegRes, error)
+	SendCode(ctx context.Context, in *CodeReq, opts ...grpc.CallOption) (*NoRes, error)
 }
 
 type registerClient struct {
@@ -42,11 +43,21 @@ func (c *registerClient) RegisterByPhone(ctx context.Context, in *RegReq, opts .
 	return out, nil
 }
 
+func (c *registerClient) SendCode(ctx context.Context, in *CodeReq, opts ...grpc.CallOption) (*NoRes, error) {
+	out := new(NoRes)
+	err := c.cc.Invoke(ctx, "/register.Register/sendCode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RegisterServer is the server API for Register service.
 // All implementations must embed UnimplementedRegisterServer
 // for forward compatibility
 type RegisterServer interface {
 	RegisterByPhone(context.Context, *RegReq) (*RegRes, error)
+	SendCode(context.Context, *CodeReq) (*NoRes, error)
 	mustEmbedUnimplementedRegisterServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedRegisterServer struct {
 
 func (UnimplementedRegisterServer) RegisterByPhone(context.Context, *RegReq) (*RegRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterByPhone not implemented")
+}
+func (UnimplementedRegisterServer) SendCode(context.Context, *CodeReq) (*NoRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendCode not implemented")
 }
 func (UnimplementedRegisterServer) mustEmbedUnimplementedRegisterServer() {}
 
@@ -88,6 +102,24 @@ func _Register_RegisterByPhone_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Register_SendCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CodeReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegisterServer).SendCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/register.Register/sendCode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegisterServer).SendCode(ctx, req.(*CodeReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Register_ServiceDesc is the grpc.ServiceDesc for Register service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var Register_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "registerByPhone",
 			Handler:    _Register_RegisterByPhone_Handler,
+		},
+		{
+			MethodName: "sendCode",
+			Handler:    _Register_SendCode_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
