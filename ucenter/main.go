@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logx"
 	"grpc-common/ucenter/types/register"
 	"ucenter/internal/config"
 	"ucenter/internal/server"
@@ -19,7 +20,11 @@ var configFile = flag.String("f", "etc/conf.yaml", "the config file")
 
 func main() {
 	flag.Parse()
-
+	//日志的格式修改
+	logx.MustSetup(logx.LogConf{
+		Stat:     false,
+		Encoding: "plain",
+	})
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
 	ctx := svc.NewServiceContext(c)
