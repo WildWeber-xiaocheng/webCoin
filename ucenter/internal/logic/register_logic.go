@@ -46,6 +46,18 @@ func (l *RegisterLogic) RegisterByPhone(in *register.RegReq) (*register.RegRes, 
 		return nil, errors.New("人机校验未通过")
 	}
 	logx.Info("人机校验通过....")
+	//2.校验验证码
+	redisCode := ""
+	key := RegisterCacheKey + in.Phone
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	err := l.svcCtx.Cache.GetCtx(ctx, key, &redisCode)
+	if err != nil {
+		return nil, errors.New("验证码不可用或者验证码已过期")
+	}
+	if in.Code != redisCode {
+		return nil, errors.New("验证码不正确")
+	}
 	return &register.RegRes{}, nil
 }
 
