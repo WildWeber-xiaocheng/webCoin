@@ -5,6 +5,7 @@ import (
 	"errors"
 	"grpc-common/ucenter/types/register"
 	"time"
+	"ucenter/internal/domain"
 	"ucenter/internal/svc"
 	"webCoin-common/tools"
 
@@ -17,18 +18,34 @@ type RegisterLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	logx.Logger
+	CaptchaDomain *domain.CaptchaDomain
 }
 
 func NewRegisterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *RegisterLogic {
 	return &RegisterLogic{
-		ctx:    ctx,
-		svcCtx: svcCtx,
-		Logger: logx.WithContext(ctx),
+		ctx:           ctx,
+		svcCtx:        svcCtx,
+		Logger:        logx.WithContext(ctx),
+		CaptchaDomain: domain.NewCaptchaDomain(),
 	}
 }
 
 func (l *RegisterLogic) RegisterByPhone(in *register.RegReq) (*register.RegRes, error) {
-	logx.Info("ucenter rpc register by phone call...")
+	//logx.Info("ucenter rpc register by phone call...")
+	//1.校验 人机验证是否通过
+	//引入domain层，将各个具体的处理逻辑都抽象出来
+	isVerify := l.CaptchaDomain.Verity(
+		in.Captcha.Server,
+		l.svcCtx.Config.Captcha.Vid,
+		l.svcCtx.Config.Captcha.Key,
+		in.Captcha.Token,
+		2, //2 代表注册场景
+		in.Ip)
+	if isVerify {
+		logx.Error("人机校验未通过")
+		return nil, errors.New("人机校验未通过")
+	}
+	logx.Info("人机校验通过....")
 	return &register.RegRes{}, nil
 }
 

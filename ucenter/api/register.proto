@@ -14,6 +14,7 @@ message RegReq {
   string code = 6; //验证码
   string country = 7;
   string superPartner = 8;
+  string ip = 9; //用于人机验证
 }
 
 message RegRes {}
