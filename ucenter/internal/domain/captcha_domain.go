@@ -32,17 +32,17 @@ func (d *CaptchaDomain) Verity(server string, vid string, key string, token stri
 		Ip:        ip,
 	})
 	if err != nil {
-		logx.Errorf("CaptchaDomain Verify post err : %s", err.Error())
+		logx.Errorf("MemberDomain Verify post err : %s", err.Error())
 		return false
 	}
 	var vaptchaRsp *vaptchaRsp
 	err = json.Unmarshal(resp, &vaptchaRsp)
 	if err != nil {
-		logx.Errorf("CaptchaDomain Verify Unmarshal respBytes err : %s", err.Error())
+		logx.Errorf("MemberDomain Verify Unmarshal respBytes err : %s", err.Error())
 		return false
 	}
 	if vaptchaRsp != nil && vaptchaRsp.Success == 1 {
-		logx.Info("CaptchaDomain Verify success")
+		logx.Info("MemberDomain Verify success")
 		return true
 	}
 	return false

@@ -9,5 +9,5 @@ type DbConn interface {
 }
 
 type MsDB struct {
-	*gorm.DB
+	Conn *gorm.DB
 }
