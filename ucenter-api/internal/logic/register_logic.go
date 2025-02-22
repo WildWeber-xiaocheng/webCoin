@@ -34,7 +34,7 @@ func (l *RegisterLogic) Register(req *types.Request) (resp *types.Response, err 
 		return nil, err
 	}
 
-	_, err = l.svcCtx.UCRegisterRpc.RegisterByPhone(ctx, &register.RegReq{})
+	_, err = l.svcCtx.UCRegisterRpc.RegisterByPhone(ctx, regReq)
 	if err != nil {
 		return nil, err
 	}

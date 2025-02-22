@@ -41,7 +41,7 @@ func (l *RegisterLogic) RegisterByPhone(in *register.RegReq) (*register.RegRes, 
 		in.Captcha.Token,
 		2, //2 代表注册场景
 		in.Ip)
-	if isVerify {
+	if !isVerify {
 		logx.Error("人机校验未通过")
 		return nil, errors.New("人机校验未通过")
 	}
