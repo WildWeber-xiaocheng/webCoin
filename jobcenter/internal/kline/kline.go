@@ -9,15 +9,17 @@ import (
 	"webCoin-common/tools"
 )
 
-var secretKey = "84792342C53C9976E039C9385EF5FB62"
+//var secretKey = "84792342C53C9976E039C9385EF5FB62"
 
 type Kline struct {
 	wg sync.WaitGroup
+	c  OkxConfig
 }
 
-func NewKline() *Kline {
+func NewKline(c OkxConfig) *Kline {
 	return &Kline{
 		wg: sync.WaitGroup{},
+		c:  c,
 	}
 }
 
@@ -25,6 +27,14 @@ type OkxResult struct {
 	Code string     `json:"code"`
 	Msg  string     `json:"msg"`
 	Data [][]string `json:"data"`
+}
+
+type OkxConfig struct {
+	ApiKey    string
+	SecretKey string
+	Pass      string
+	Host      string
+	Proxy     string
 }
 
 // k线数据拉取
@@ -42,18 +52,19 @@ func (k *Kline) Do(period string) {
 func (k *Kline) getKlineData(instId string, symbol, period string) {
 	api := "GET/api/v5/market/candles?instId=" + instId + "&bar=" + period
 	timestamp := tools.ISO(time.Now())
+	secretKey := k.c.SecretKey
 	sha256 := tools.ComputeHmacSha256(timestamp+api, secretKey)
 	sign := base64.StdEncoding.EncodeToString([]byte(sha256))
 	header := make(map[string]string)
-	header["OK-ACCESS-KEY"] = "18b90a21-9b4a-46cb-a6f7-b82f28e263ad"
+	header["OK-ACCESS-KEY"] = k.c.ApiKey
 	header["OK-ACCESS-SIGN"] = sign
 	header["OK-ACCESS-TIMESTAMP"] = timestamp
-	header["OK-ACCESS-PASSPHRASE"] = "Mszlu!@#$56789"
+	header["OK-ACCESS-PASSPHRASE"] = k.c.Pass
 	//系统的代理ip：http://127.0.0.1:7890
 	respBody, err := tools.GetWithHeader(
-		"https://www.okx.com/api/v5/market/candles?instId="+instId+"&bar="+period,
+		k.c.Host+"/api/v5/market/candles?instId="+instId+"&bar="+period,
 		header,
-		"http://127.0.0.1:7890")
+		k.c.Proxy)
 	if err != nil {
 		log.Println(err)
 		k.wg.Done()

@@ -1,0 +1,6 @@
+Okx:
+  ApiKey: "18b90a21-9b4a-46cb-a6f7-b82f28e263ad"
+  SecretKey: "84792342C53C9976E039C9385EF5FB62"
+  Pass: "Mszlu!@#$56789"
+  Host: "https://www.okx.com"
+  Proxy: "http://127.0.0.1:7890"
