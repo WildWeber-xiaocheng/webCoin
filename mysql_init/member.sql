@@ -32,7 +32,7 @@ CREATE TABLE `member`  (
                            `margin` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
                            `member_level` int(0) NOT NULL,
                            `mobile_phone` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-                           `password` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+                           `password` varchar(2047) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
                            `promotion_code` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
                            `publish_advertise` int(0) NOT NULL,
                            `real_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,

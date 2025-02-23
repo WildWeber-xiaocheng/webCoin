@@ -12,6 +12,12 @@ type MemberDao struct {
 	conn *gorms.GormConn
 }
 
+func (m *MemberDao) Save(ctx context.Context, mem *model.Member) error {
+	session := m.conn.Session(ctx)
+	err := session.Save(mem).Error
+	return err
+}
+
 func NewMemberDao(db *msdb.MsDB) *MemberDao {
 	return &MemberDao{
 		conn: gorms.New(db.Conn),

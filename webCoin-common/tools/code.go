@@ -11,5 +11,5 @@ func Rand4Num() string {
 	if num < 1000 {
 		num = num + 1000
 	}
-	return fmt.Sprintf("%s", num)
+	return fmt.Sprintf("%d", num)
 }

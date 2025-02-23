@@ -18,7 +18,7 @@ type RegisterLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	logx.Logger
-	CaptchaDomain *domain.MemberDomain
+	CaptchaDomain *domain.CaptchaDomain
 	MemberDomain  *domain.MemberDomain
 }
 
@@ -67,6 +67,17 @@ func (l *RegisterLogic) RegisterByPhone(in *register.RegReq) (*register.RegRes, 
 	}
 	if mem != nil {
 		return nil, errors.New("此手机号已经被注册")
+	}
+	//4.生成Member模型，写入数据库
+	err = l.MemberDomain.Register(ctx,
+		in.Phone,
+		in.Password,
+		in.Username,
+		in.Country,
+		in.SuperPartner,
+		in.Promotion)
+	if err != nil {
+		return nil, errors.New("注册失败")
 	}
 	return &register.RegRes{}, nil
 }
