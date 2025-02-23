@@ -4,3 +4,8 @@ Okx:
   Pass: "Mszlu!@#$56789"
   Host: "https://www.okx.com"
   Proxy: "http://127.0.0.1:7890"
+Mongo:
+  Url: "mongodb://localhost:27018"
+  Username: "root"
+  Password: "root123456"
+  DataBase: "mscoin"
