@@ -10,8 +10,15 @@
 
 其他工具：
 
-  copier: 将一个结构体数据copy到另一个结构体数据
-    github.com/jinzhu/copier
+copier: 将一个结构体数据copy到另一个结构体数据
+
+https://github.com/jinzhu/copier
+  
+gocron: 定时任务
+
+  https://github.com/go-co-op/gocron
+
+
 
 ### 数据来源
  使用欧易提供的api
