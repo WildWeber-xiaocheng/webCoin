@@ -3,6 +3,8 @@ go 1.23.2
 use (
 	./grpc-common
 	./jobcenter
+	./market
+	./market-api
 	./ucenter
 	./ucenter-api
 	./webCoin-common

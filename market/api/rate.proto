@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package rate;
+
+// protoc-gen-go 版本大于1.4.0, proto文件需要加上go_package,否则无法生成
+option go_package = "./rate";
+
+message RegReq {
+  string username = 1;
+  string password = 2;
+  CaptchaReq captcha = 3;
+  string phone = 4;
+  string promotion = 5; //邀请码
+  string code = 6; //验证码
+  string country = 7;
+  string superPartner = 8;
+  string ip = 9; //用于人机验证
+}
+
+message RegRes {}
+
+//人机验证
+message CaptchaReq {
+  string server = 1;
+  string token = 2;
+}
+
+//发送验证码
+message CodeReq {
+  string phone = 1;
+  string country = 2;
+}
+
+
+
+message NoRes {}
+
+service Register {
+  rpc registerByPhone(RegReq) returns(RegRes);
+  rpc sendCode(CodeReq) returns(NoRes);
+}
