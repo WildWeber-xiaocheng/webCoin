@@ -3,6 +3,8 @@ package kline
 import (
 	"encoding/base64"
 	"encoding/json"
+	"jobcenter/internal/database"
+	"jobcenter/internal/domain"
 	"log"
 	"sync"
 	"time"
@@ -12,14 +14,16 @@ import (
 //var secretKey = "84792342C53C9976E039C9385EF5FB62"
 
 type Kline struct {
-	wg sync.WaitGroup
-	c  OkxConfig
+	wg          sync.WaitGroup
+	c           OkxConfig
+	klineDomain *domain.KlineDomain
 }
 
-func NewKline(c OkxConfig) *Kline {
+func NewKline(c OkxConfig, client *database.MongoClient) *Kline {
 	return &Kline{
-		wg: sync.WaitGroup{},
-		c:  c,
+		wg:          sync.WaitGroup{},
+		c:           c,
+		klineDomain: domain.NewKlineDomain(client),
 	}
 }
 
@@ -78,8 +82,11 @@ func (k *Kline) getKlineData(instId string, symbol, period string) {
 		k.wg.Done()
 		return
 	}
-	log.Println("===========获取到k线数据=============")
-	log.Println("instId:", instId, "period:", period)
-	log.Println("result data:", string(respBody))
+	log.Println("===========存储数据到mongo=============")
+	if result.Code == "0" {
+		//代表成功
+		k.klineDomain.Save(result.Data, symbol, period)
+	}
+	k.wg.Done()
 	log.Println("===========end=============")
 }
