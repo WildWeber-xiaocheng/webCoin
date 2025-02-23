@@ -48,24 +48,24 @@ func defaultString() reflect.Value {
 }
 
 func defaultInt() reflect.Value {
-	var i int = -1
+	var i int = 0
 	return reflect.ValueOf(i)
 }
 
 func defaultInt32() reflect.Value {
-	var i int32 = -1
+	var i int32 = 0
 	return reflect.ValueOf(i)
 }
 func defaultInt64() reflect.Value {
-	var i int64 = -1
+	var i int64 = 0
 	return reflect.ValueOf(i)
 }
 
 func defaultFloat64() reflect.Value {
-	var i float64 = -1
+	var i float64 = 0
 	return reflect.ValueOf(i)
 }
 func defaultFloat32() reflect.Value {
-	var i float32 = -1
+	var i float32 = 0
 	return reflect.ValueOf(i)
 }

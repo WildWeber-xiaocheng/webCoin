@@ -14,3 +14,6 @@ CacheRedis:
 Captcha:
   Vid: 67b33cafdc0ff12924d9b660
   Key: 2859b9a8cf7642789375155c30a698c7
+JWT:
+  AccessSecret: "!@#$mscoin"
+  AccessExpire: 604800
