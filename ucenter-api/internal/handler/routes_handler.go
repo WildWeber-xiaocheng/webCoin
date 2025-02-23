@@ -13,4 +13,5 @@ func RegisterHandlers(r *Routers, serverCtx *svc.ServiceContext) {
 	login := NewLoginHandler(serverCtx)
 	loginGroup := r.Group()
 	loginGroup.Post("/uc/login", login.Login)
+	loginGroup.Post("/uc/check/login", login.CheckLogin)
 }

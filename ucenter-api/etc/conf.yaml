@@ -6,3 +6,6 @@ UCenterRpc:
     Hosts:
       - 127.0.0.1:2379
     Key: ucenter.rpc
+JWT:
+  AccessSecret: "!@#$mscoin"
+  AccessExpire: 604800
