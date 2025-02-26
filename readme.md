@@ -18,6 +18,10 @@ gocron: 定时任务
 
   https://github.com/go-co-op/gocron
 
+vaptcha: 图形验证码
+
+  https://www.vaptcha.com/
+
 
 
 ### 数据来源

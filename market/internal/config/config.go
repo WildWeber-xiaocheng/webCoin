@@ -10,5 +10,5 @@ type Config struct {
 	zrpc.RpcServerConf
 	Mysql      database.MysqlConfig
 	CacheRedis cache.CacheConf
-	Mongo      database.MongoClient
+	Mongo      database.MongoConfig
 }
