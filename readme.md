@@ -7,6 +7,8 @@
 * redis
 * 服务注册与发现：etcd
 * orm：gorm
+* websocket
+* 消息中间件：kafka
 
 其他工具：
 
