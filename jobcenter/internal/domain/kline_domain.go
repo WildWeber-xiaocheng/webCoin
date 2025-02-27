@@ -13,7 +13,7 @@ type KlineDomain struct {
 	klineRepo repo.KlineRepo
 }
 
-func (d KlineDomain) Save(data [][]string, symbol string, period string) {
+func (d *KlineDomain) Save(data [][]string, symbol string, period string) {
 	klines := make([]*model.Kline, len(data))
 	for i, v := range data {
 		kline := model.NewKline(v, period)

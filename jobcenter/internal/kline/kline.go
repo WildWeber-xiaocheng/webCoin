@@ -3,8 +3,8 @@ package kline
 import (
 	"encoding/base64"
 	"encoding/json"
-	"jobcenter/internal/database"
 	"jobcenter/internal/domain"
+	"jobcenter/internal/svc"
 	"log"
 	"sync"
 	"time"
@@ -17,13 +17,15 @@ type Kline struct {
 	wg          sync.WaitGroup
 	c           OkxConfig
 	klineDomain *domain.KlineDomain
+	queueDomain *domain.QueueDomain
 }
 
-func NewKline(c OkxConfig, client *database.MongoClient) *Kline {
+func NewKline(c OkxConfig, ctx *svc.ServiceContext) *Kline {
 	return &Kline{
 		wg:          sync.WaitGroup{},
 		c:           c,
-		klineDomain: domain.NewKlineDomain(client),
+		klineDomain: domain.NewKlineDomain(ctx.MongoClient),
+		queueDomain: domain.NewQueueDomain(ctx.KafkaClient),
 	}
 }
 
@@ -86,6 +88,14 @@ func (k *Kline) getKlineData(instId string, symbol, period string) {
 	if result.Code == "0" {
 		//代表成功
 		k.klineDomain.Save(result.Data, symbol, period)
+		if "1m" == period {
+			//把这个最新的数据result.Data[0]推送到market服务，由market服务推送到前端页面进行数据实时变化
+			//->kafka->market   kafka消费者消费数据 ->通过websocket通道发送给前端 ->前端更新数据
+			//只有1m间隔的数据 才向kafka发送数据
+			if len(result.Data) > 0 {
+				k.queueDomain.Send1mKline(result.Data[0], symbol, period)
+			}
+		}
 	}
 	k.wg.Done()
 	log.Println("===========end=============")
