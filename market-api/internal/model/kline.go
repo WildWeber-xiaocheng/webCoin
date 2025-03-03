@@ -17,26 +17,50 @@ type Kline struct {
 	Turnover     float64 `bson:"turnover,omitempty"` //成交额
 }
 
-func (*Kline) Table(symbol, period string) string {
-	return "exchange_kline_" + symbol + "_" + period
+// ToCoinThumb 将kline数据转为CoinThumb
+func (k *Kline) ToCoinThumb(symbol string, ct *market.CoinThumb) *market.CoinThumb {
+	isSame := false
+	if ct.Symbol == symbol && ct.DateTime == k.Time { //认为这是同一个数据
+		isSame = true
+	}
+	if !isSame {
+		ct.Close = k.ClosePrice
+		ct.Open = k.OpenPrice
+		if ct.High < k.HighestPrice {
+			ct.High = k.HighestPrice
+		}
+		ct.Low = k.LowestPrice
+		if ct.Low > k.LowestPrice {
+			ct.Low = k.LowestPrice
+		}
+		ct.Zone = 0
+		ct.Volume = op.AddN(k.Volume, ct.Volume, 8)
+		ct.Turnover = op.AddN(k.Turnover, ct.Turnover, 8)
+		ct.Change = k.LowestPrice - ct.Close
+		ct.Chg = op.MulN(op.DivN(ct.Change, ct.Close, 5), 100, 3)
+		ct.UsdRate = k.ClosePrice
+		ct.BaseUsdRate = 1
+		ct.Trend = append(ct.Trend, k.ClosePrice)
+		ct.DateTime = k.Time
+	}
+	return ct
 }
 
-func (k *Kline) ToCoinThumb(symbol string, end *Kline) *market.CoinThumb {
+func (k *Kline) InitCoinThumb(symbol string) *market.CoinThumb {
 	ct := &market.CoinThumb{}
 	ct.Symbol = symbol
 	ct.Close = k.ClosePrice
 	ct.Open = k.OpenPrice
+	ct.High = k.HighestPrice
+	ct.Volume = k.Volume
+	ct.Turnover = k.Turnover
+	ct.Low = k.LowestPrice
 	ct.Zone = 0
-	ct.Change = k.ClosePrice - end.ClosePrice
-	ct.Chg = op.DivN(ct.Change, end.ClosePrice, 5) //变化率
+	ct.Change = 0
+	ct.Chg = 0.0
 	ct.UsdRate = k.ClosePrice
 	ct.BaseUsdRate = 1
-	return ct
-}
-
-func DefaultCoinThumb(symbol string) *market.CoinThumb {
-	ct := &market.CoinThumb{}
-	ct.Symbol = symbol
-	ct.Trend = []float64{}
+	ct.Trend = make([]float64, 0)
+	ct.DateTime = k.Time
 	return ct
 }

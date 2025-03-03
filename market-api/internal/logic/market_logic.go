@@ -18,15 +18,28 @@ type MarketLogic struct {
 }
 
 func (l *MarketLogic) SymbolThumbTrend(req *types.MarketReq) (list []*types.CoinThumbResp, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	thumbResp, err := l.svcCtx.MarketRpc.FindSymbolThumbTrend(ctx, &market.MarketReq{
-		Ip: req.Ip,
-	})
-	if err != nil {
-		return nil, err
+	var coinThumbs []*market.CoinThumb
+	thumbs := l.svcCtx.Processor.GetThumb()
+	isCache := false
+	if thumbs != nil {
+		switch thumbs.(type) {
+		case []*market.CoinThumb:
+			coinThumbs = thumbs.([]*market.CoinThumb)
+			isCache = true
+		}
 	}
-	if err := copier.Copy(&list, thumbResp.List); err != nil {
+	if !isCache {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		thumbResp, err := l.svcCtx.MarketRpc.FindSymbolThumbTrend(ctx, &market.MarketReq{
+			Ip: req.Ip,
+		})
+		if err != nil {
+			return nil, err
+		}
+		coinThumbs = thumbResp.List
+	}
+	if err := copier.Copy(&list, coinThumbs); err != nil {
 		return nil, errors.New("数据格式有误")
 	}
 	for _, v := range list {

@@ -39,3 +39,11 @@ func DivN(x float64, y float64, n int) float64 {
 	value, _ := strconv.ParseFloat(fmt.Sprintf("%."+sprintf+"f", x/y), 64)
 	return value
 }
+
+// DivN 保留固定位数的加法
+func AddN(x float64, y float64, n int) float64 {
+	//n小数点位数
+	sprintf := fmt.Sprintf("%d", n)
+	value, _ := strconv.ParseFloat(fmt.Sprintf("%."+sprintf+"f", x+y), 64)
+	return value
+}

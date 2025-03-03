@@ -9,6 +9,7 @@
 * orm：gorm
 * websocket
 * 消息中间件：kafka
+* websocket：socket.io
 
 其他工具：
 

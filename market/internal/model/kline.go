@@ -28,9 +28,10 @@ func (k *Kline) ToCoinThumb(symbol string, end *Kline) *market.CoinThumb {
 	ct.Open = k.OpenPrice
 	ct.Zone = 0
 	ct.Change = k.ClosePrice - end.ClosePrice
-	ct.Chg = op.DivN(ct.Change, end.ClosePrice, 5) //变化率
+	ct.Chg = op.DivN(op.DivN(ct.Change, end.ClosePrice, 5), 100, 5) //乘100 百分比变化率
 	ct.UsdRate = k.ClosePrice
 	ct.BaseUsdRate = 1
+	ct.DateTime = k.Time
 	return ct
 }
 
