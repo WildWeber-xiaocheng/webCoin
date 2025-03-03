@@ -2,6 +2,7 @@ package domain
 
 import (
 	"encoding/json"
+	"github.com/zeromicro/go-zero/core/logx"
 	"jobcenter/internal/database"
 	"jobcenter/internal/model"
 )
@@ -22,6 +23,7 @@ func (d *QueueDomain) Send1mKline(data []string, symbol, period string) {
 		Data:  bytes,
 	}
 	d.kafkaCli.Send(sendData)
+	logx.Info("-----------发送数据成功------------------")
 }
 
 func NewQueueDomain(kafkaCli *database.KafkaClient) *QueueDomain {

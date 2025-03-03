@@ -3,8 +3,8 @@ package kline
 import (
 	"encoding/base64"
 	"encoding/json"
+	"jobcenter/internal/database"
 	"jobcenter/internal/domain"
-	"jobcenter/internal/svc"
 	"log"
 	"sync"
 	"time"
@@ -20,12 +20,12 @@ type Kline struct {
 	queueDomain *domain.QueueDomain
 }
 
-func NewKline(c OkxConfig, ctx *svc.ServiceContext) *Kline {
+func NewKline(c OkxConfig, mongoClient *database.MongoClient, kafkaClient *database.KafkaClient) *Kline {
 	return &Kline{
 		wg:          sync.WaitGroup{},
 		c:           c,
-		klineDomain: domain.NewKlineDomain(ctx.MongoClient),
-		queueDomain: domain.NewQueueDomain(ctx.KafkaClient),
+		klineDomain: domain.NewKlineDomain(mongoClient),
+		queueDomain: domain.NewQueueDomain(kafkaClient),
 	}
 }
 
