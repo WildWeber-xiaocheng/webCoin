@@ -4,7 +4,8 @@ import (
 	"market-api/internal/svc"
 )
 
-func ExchangeRateHandlers(r *Routers, serverCtx *svc.ServiceContext) {
+func RegisterHandlers(r *Routers, serverCtx *svc.ServiceContext) {
+	//如果要有中间件 怎么办？
 	rate := NewExchangeRateHandler(serverCtx)
 	rateGroup := r.Group()
 	rateGroup.Post("/exchange-rate/usd/:unit", rate.GetUsdRate)
@@ -12,8 +13,7 @@ func ExchangeRateHandlers(r *Routers, serverCtx *svc.ServiceContext) {
 	marketGroup := r.Group()
 	marketGroup.Post("/symbol-thumb-trend", market.SymbolThumbTrend)
 
-	//要注册websocket路径
 	wsGroup := r.Group()
 	wsGroup.GetNoPrefix("/socket.io", nil)
-	wsGroup.PostNoprefix("/socket.io", nil)
+	wsGroup.PostNoPrefix("/socket.io", nil)
 }

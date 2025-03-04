@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 	"grpc-common/market/types/market"
@@ -18,34 +17,50 @@ type MarketLogic struct {
 }
 
 func (l *MarketLogic) SymbolThumbTrend(req *types.MarketReq) (list []*types.CoinThumbResp, err error) {
-	var coinThumbs []*market.CoinThumb
-	thumbs := l.svcCtx.Processor.GetThumb()
+	var thumbs []*market.CoinThumb
+	thumb := l.svcCtx.Processor.GetThumb()
 	isCache := false
-	if thumbs != nil {
-		switch thumbs.(type) {
+	if thumb != nil {
+		switch thumb.(type) {
 		case []*market.CoinThumb:
-			coinThumbs = thumbs.([]*market.CoinThumb)
+			thumbs = thumb.([]*market.CoinThumb)
 			isCache = true
 		}
 	}
 	if !isCache {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		thumbResp, err := l.svcCtx.MarketRpc.FindSymbolThumbTrend(ctx, &market.MarketReq{
-			Ip: req.Ip,
-		})
+		ctx, cancelFunc := context.WithTimeout(l.ctx, 10*time.Second)
+		defer cancelFunc()
+		symbolThumbRes, err := l.svcCtx.MarketRpc.FindSymbolThumbTrend(ctx,
+			&market.MarketReq{
+				Ip: req.Ip,
+			})
 		if err != nil {
 			return nil, err
 		}
-		coinThumbs = thumbResp.List
+		thumbs = symbolThumbRes.List
 	}
-	if err := copier.Copy(&list, coinThumbs); err != nil {
-		return nil, errors.New("数据格式有误")
+	if err := copier.Copy(&list, thumbs); err != nil {
+		return nil, err
 	}
 	for _, v := range list {
 		if v.Trend == nil {
 			v.Trend = []float64{}
 		}
+	}
+	return
+}
+
+func (l *MarketLogic) SymbolThumb(req *types.MarketReq) (list []*types.CoinThumbResp, err error) {
+	var thumbs []*market.CoinThumb
+	thumb := l.svcCtx.Processor.GetThumb()
+	if thumb != nil {
+		switch thumb.(type) {
+		case []*market.CoinThumb:
+			thumbs = thumb.([]*market.CoinThumb)
+		}
+	}
+	if err := copier.Copy(&list, thumbs); err != nil {
+		return nil, err
 	}
 	return
 }

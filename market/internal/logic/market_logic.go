@@ -19,7 +19,7 @@ type MarketLogic struct {
 
 func (l *MarketLogic) FindSymbolThumbTrend(req *market.MarketReq) (*market.SymbolThumbRes, error) {
 	//查出所有的货币
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(l.ctx, 5*time.Second)
 	defer cancel()
 	exchangeCoins := l.exchangeCoinDomain.FindVisible(ctx)
 	// 查询mongo中相应的数据

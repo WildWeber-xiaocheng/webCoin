@@ -8,7 +8,6 @@ import (
 	"net/http"
 )
 
-// 对go-zero原有的路由进行封装
 type Routers struct {
 	server      *rest.Server
 	middlewares []rest.Middleware
@@ -32,10 +31,10 @@ func (r *Routers) Get(path string, handlerFunc http.HandlerFunc) {
 				Handler: handlerFunc,
 			},
 		),
-		//统一加个前缀
 		rest.WithPrefix(r.prefix),
 	)
 }
+
 func (r *Routers) Post(path string, handlerFunc http.HandlerFunc) {
 	r.server.AddRoutes(
 		rest.WithMiddlewares(
@@ -60,11 +59,10 @@ func (r *Routers) GetNoPrefix(path string, handlerFunc http.HandlerFunc) {
 				Handler: handlerFunc,
 			},
 		),
-		//统一加个前缀
-		rest.WithPrefix(r.prefix),
 	)
 }
-func (r *Routers) PostNoprefix(path string, handlerFunc http.HandlerFunc) {
+
+func (r *Routers) PostNoPrefix(path string, handlerFunc http.HandlerFunc) {
 	r.server.AddRoutes(
 		rest.WithMiddlewares(
 			r.middlewares,
@@ -74,17 +72,11 @@ func (r *Routers) PostNoprefix(path string, handlerFunc http.HandlerFunc) {
 				Handler: handlerFunc,
 			},
 		),
-		rest.WithPrefix(r.prefix),
 	)
 }
-
 func (r *Routers) Group() *Routers {
 	return &Routers{
 		server: r.server,
 		prefix: r.prefix,
 	}
-}
-
-func (r *Routers) Use(middlewares ...rest.Middleware) {
-	r.middlewares = middlewares
 }

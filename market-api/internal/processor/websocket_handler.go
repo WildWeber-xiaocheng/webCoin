@@ -2,35 +2,40 @@ package processor
 
 import (
 	"encoding/json"
+	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 	"grpc-common/market/types/market"
 	"market-api/internal/model"
-	"market-api/internal/websocket"
+	"market-api/internal/ws"
 )
 
 type WebsocketHandler struct {
-	wsServer *websocket.WebSocketServer
+	wsServer *ws.WebsocketServer
 }
 
-func (w *WebsocketHandler) HandlerTrade(symbol string, data []byte) {
+func (w *WebsocketHandler) HandleTrade(symbol string, data []byte) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (w *WebsocketHandler) HandlerKLine(symbol string, kline *model.Kline, thumbMap map[string]*market.CoinThumb) {
-	logx.Info("======接收到数据,symbol=", symbol)
+func (w *WebsocketHandler) HandleKLine(symbol string, kline *model.Kline, thumbMap map[string]*market.CoinThumb) {
+	logx.Info("================WebsocketHandler Start=======================")
+	logx.Info("symbol:", symbol)
 	thumb := thumbMap[symbol]
 	if thumb == nil {
 		thumb = kline.InitCoinThumb(symbol)
 	}
 	coinThumb := kline.ToCoinThumb(symbol, thumb)
-
-	marshal, _ := json.Marshal(coinThumb) //转为json
+	result := &model.CoinThumb{}
+	copier.Copy(result, coinThumb)
+	marshal, _ := json.Marshal(result)
 	w.wsServer.BroadcastToNamespace("/", "/topic/market/thumb", string(marshal))
-	logx.Info("=======接收到数据,kline=", string(marshal))
+
+	logx.Info("marshal:", marshal)
+	logx.Info("================WebsocketHandler End=======================")
 }
 
-func NewWebsocketHandler(wsServer *websocket.WebSocketServer) *WebsocketHandler {
+func NewWebsocketHandler(wsServer *ws.WebsocketServer) *WebsocketHandler {
 	return &WebsocketHandler{
 		wsServer: wsServer,
 	}
