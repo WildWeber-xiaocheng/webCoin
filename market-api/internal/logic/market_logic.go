@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"errors"
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 	"grpc-common/market/types/market"
@@ -82,6 +83,22 @@ func (l *MarketLogic) SymbolInfo(req types.MarketReq) (resp *types.ExchangeCoinR
 		return nil, err
 	}
 	return
+}
+
+func (l *MarketLogic) CoinInfo(req *types.MarketReq) (*types.Coin, error) {
+	ctx, cancel := context.WithTimeout(l.ctx, 5*time.Second)
+	defer cancel()
+	coin, err := l.svcCtx.MarketRpc.FindCoinInfo(ctx, &market.MarketReq{
+		Unit: req.Unit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	ec := &types.Coin{}
+	if err := copier.Copy(&ec, coin); err != nil {
+		return nil, errors.New("数据格式有误")
+	}
+	return ec, nil
 }
 
 func NewMarketLogic(ctx context.Context, svcCtx *svc.ServiceContext) *MarketLogic {

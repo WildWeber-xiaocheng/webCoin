@@ -16,10 +16,12 @@ type (
 	MarketReq      = market.MarketReq
 	SymbolThumbRes = market.SymbolThumbRes
 	ExchangeCoin   = market.ExchangeCoin
+	Coin           = market.Coin
 
 	Market interface {
 		FindSymbolThumbTrend(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*SymbolThumbRes, error)
 		FindSymbolInfo(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*ExchangeCoin, error)
+		FindCoinInfo(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*Coin, error)
 	}
 
 	defaultMarket struct {
@@ -41,4 +43,9 @@ func (m *defaultMarket) FindSymbolThumbTrend(ctx context.Context, in *MarketReq,
 func (m *defaultMarket) FindSymbolInfo(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*ExchangeCoin, error) {
 	client := market.NewMarketClient(m.cli.Conn())
 	return client.FindSymbolInfo(ctx, in, opts...)
+}
+
+func (m *defaultMarket) FindCoinInfo(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*Coin, error) {
+	client := market.NewMarketClient(m.cli.Conn())
+	return client.FindCoinInfo(ctx, in, opts...)
 }

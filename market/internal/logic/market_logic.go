@@ -16,6 +16,7 @@ type MarketLogic struct {
 	logx.Logger
 	exchangeCoinDomain *domain.ExchangeCoinDomain
 	marketDomain       *domain.MarketDomain
+	coinDomain         *domain.CoinDomain
 }
 
 func (l *MarketLogic) FindSymbolThumbTrend(req *market.MarketReq) (*market.SymbolThumbRes, error) {
@@ -53,6 +54,20 @@ func (l *MarketLogic) FindSymbolInfo(req *market.MarketReq) (*market.ExchangeCoi
 	return ec, nil
 }
 
+func (l *MarketLogic) FindCoinInfo(req *market.MarketReq) (*market.Coin, error) {
+	ctx, cancel := context.WithTimeout(l.ctx, 5*time.Second)
+	defer cancel()
+	coin, err := l.coinDomain.FindCoinInfo(ctx, req.Unit)
+	if err != nil {
+		return nil, err
+	}
+	mc := &market.Coin{}
+	if err := copier.Copy(mc, coin); err != nil {
+		return nil, err
+	}
+	return mc, nil
+}
+
 func NewMarketLogic(ctx context.Context, svcCtx *svc.ServiceContext) *MarketLogic {
 	return &MarketLogic{
 		ctx:                ctx,
@@ -60,5 +75,6 @@ func NewMarketLogic(ctx context.Context, svcCtx *svc.ServiceContext) *MarketLogi
 		Logger:             logx.WithContext(ctx),
 		exchangeCoinDomain: domain.NewExchangeCoinDomain(svcCtx.Db),
 		marketDomain:       domain.NewMarketDomain(svcCtx.MongoClient),
+		coinDomain:         domain.NewCoinDomain(svcCtx.Db),
 	}
 }

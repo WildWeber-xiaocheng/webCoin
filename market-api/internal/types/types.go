@@ -15,7 +15,7 @@ type RateResponse struct {
 type MarketReq struct {
 	Ip         string `json:"ip,optional"`
 	Symbol     string `json:"symbol,optional" form:"symbol,optional" path:"symbol,optional"`
-	Unit       string `json:"unit,optional" form:"unit,optional"`
+	Unit       string `json:"unit,optional" form:"unit,optional"` //单位
 	From       int64  `json:"from,optional" form:"from,optional"`
 	To         int64  `json:"to,optional" form:"to,optional"`
 	Resolution string `json:"resolution,optional" form:"resolution,optional"`
