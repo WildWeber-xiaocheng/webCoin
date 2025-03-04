@@ -21,16 +21,12 @@ func NewMarketHandler(svcCtx *svc.ServiceContext) *MarketHandler {
 }
 
 func (h *MarketHandler) SymbolThumbTrend(w http.ResponseWriter, r *http.Request) {
-	req := &types.MarketReq{}
-	//if err := httpx.ParseJsonBody(r, &req); err != nil {
-	//	httpx.ErrorCtx(r.Context(), w, err)
-	//	return
-	//}
-	//获取ip
-	ip := tools.GetRemoteClientIp(r)
-	req.Ip = ip
+	var req = &types.MarketReq{}
+	newResult := common.NewResult()
+	//获取一下ip
+	req.Ip = tools.GetRemoteClientIp(r)
 	l := logic.NewMarketLogic(r.Context(), h.svcCtx)
 	resp, err := l.SymbolThumbTrend(req)
-	result := common.NewResult().Deal(resp, err)
+	result := newResult.Deal(resp, err)
 	httpx.OkJsonCtx(r.Context(), w, result)
 }
