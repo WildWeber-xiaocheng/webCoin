@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 	"grpc-common/market/types/market"
 	"market/internal/domain"
@@ -40,6 +41,16 @@ func (l *MarketLogic) FindSymbolThumbTrend(req *market.MarketReq) (*market.Symbo
 	return &market.SymbolThumbRes{
 		List: coinThumbs,
 	}, nil
+}
+
+func (l *MarketLogic) FindSymbolInfo(req *market.MarketReq) (*market.ExchangeCoin, error) {
+	exchangeCoin, err := l.exchangeCoinDomain.FindBySymbol(l.ctx, req.Symbol)
+	if err != nil {
+		return nil, err
+	}
+	ec := &market.ExchangeCoin{}
+	copier.Copy(ec, exchangeCoin)
+	return ec, nil
 }
 
 func NewMarketLogic(ctx context.Context, svcCtx *svc.ServiceContext) *MarketLogic {

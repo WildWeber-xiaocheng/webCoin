@@ -50,6 +50,7 @@ func (l *MarketLogic) SymbolThumbTrend(req *types.MarketReq) (list []*types.Coin
 	return
 }
 
+// SymbolThumb 币币交易-币种行情
 func (l *MarketLogic) SymbolThumb(req *types.MarketReq) (list []*types.CoinThumbResp, err error) {
 	var thumbs []*market.CoinThumb
 	thumb := l.svcCtx.Processor.GetThumb()
@@ -60,6 +61,24 @@ func (l *MarketLogic) SymbolThumb(req *types.MarketReq) (list []*types.CoinThumb
 		}
 	}
 	if err := copier.Copy(&list, thumbs); err != nil {
+		return nil, err
+	}
+	return
+}
+
+func (l *MarketLogic) SymbolInfo(req types.MarketReq) (resp *types.ExchangeCoinResp, err error) {
+	ctx, cancelFunc := context.WithTimeout(l.ctx, 10*time.Second)
+	defer cancelFunc()
+	esRes, err := l.svcCtx.MarketRpc.FindSymbolInfo(ctx,
+		&market.MarketReq{
+			Ip:     req.Ip,
+			Symbol: req.Symbol,
+		})
+	if err != nil {
+		return nil, err
+	}
+	resp = &types.ExchangeCoinResp{}
+	if err := copier.Copy(resp, esRes); err != nil {
 		return nil, err
 	}
 	return

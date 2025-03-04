@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MarketClient interface {
 	FindSymbolThumbTrend(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*SymbolThumbRes, error)
+	FindSymbolInfo(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*ExchangeCoin, error)
 }
 
 type marketClient struct {
@@ -42,11 +43,21 @@ func (c *marketClient) FindSymbolThumbTrend(ctx context.Context, in *MarketReq, 
 	return out, nil
 }
 
+func (c *marketClient) FindSymbolInfo(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*ExchangeCoin, error) {
+	out := new(ExchangeCoin)
+	err := c.cc.Invoke(ctx, "/market.Market/FindSymbolInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MarketServer is the server API for Market service.
 // All implementations must embed UnimplementedMarketServer
 // for forward compatibility
 type MarketServer interface {
 	FindSymbolThumbTrend(context.Context, *MarketReq) (*SymbolThumbRes, error)
+	FindSymbolInfo(context.Context, *MarketReq) (*ExchangeCoin, error)
 	mustEmbedUnimplementedMarketServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedMarketServer struct {
 
 func (UnimplementedMarketServer) FindSymbolThumbTrend(context.Context, *MarketReq) (*SymbolThumbRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindSymbolThumbTrend not implemented")
+}
+func (UnimplementedMarketServer) FindSymbolInfo(context.Context, *MarketReq) (*ExchangeCoin, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindSymbolInfo not implemented")
 }
 func (UnimplementedMarketServer) mustEmbedUnimplementedMarketServer() {}
 
@@ -88,6 +102,24 @@ func _Market_FindSymbolThumbTrend_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Market_FindSymbolInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarketReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MarketServer).FindSymbolInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/market.Market/FindSymbolInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MarketServer).FindSymbolInfo(ctx, req.(*MarketReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Market_ServiceDesc is the grpc.ServiceDesc for Market service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var Market_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FindSymbolThumbTrend",
 			Handler:    _Market_FindSymbolThumbTrend_Handler,
+		},
+		{
+			MethodName: "FindSymbolInfo",
+			Handler:    _Market_FindSymbolInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

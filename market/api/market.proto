@@ -30,6 +30,38 @@ message CoinThumb {
   repeated double trend = 15;
 }
 
+message ExchangeCoin {
+  int64 id = 1;
+  string symbol = 2;
+  int64 baseCoinScale = 3;
+  string baseSymbol = 4;
+  int64 coinScale = 5;
+  int64 enable = 6;
+  double fee = 7;
+  int64 sort = 8;
+  int64 EnableMarketBuy = 9;
+  int64 EnableMarketSell = 10;
+  double MinSellPrice = 11;
+  int64 Flag = 12;
+  int64 MaxTradingOrder = 13;
+  int64 MaxTradingTime = 14;
+  int64 MinTurnover = 15;
+  int64 ClearTime = 16;
+  int64 EndTime = 17;
+  int64 Exchangeable = 18;
+  double MaxBuyPrice = 19;
+  double MaxVolume = 20;
+  double MinVolume = 21;
+  double PublishAmount = 22;
+  double PublishPrice = 23;
+  int64 PublishType = 24;
+  int64 RobotType = 25;
+  int64 StartTime = 26;
+  int64 Visible = 27;
+  int64 Zone = 28;
+}
+
 service Market {
   rpc FindSymbolThumbTrend(MarketReq) returns(SymbolThumbRes);
+  rpc FindSymbolInfo(MarketReq) returns(ExchangeCoin);
 }
