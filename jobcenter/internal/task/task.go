@@ -23,8 +23,32 @@ func (t *Task) Run() {
 	t.s.Every(1).Minute().Do(func() {
 		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("1m")
 	})
+	t.s.Every(3).Minute().Do(func() {
+		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("3m")
+	})
+	t.s.Every(5).Minute().Do(func() {
+		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("5m")
+	})
+	t.s.Every(15).Minute().Do(func() {
+		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("15m")
+	})
+	t.s.Every(30).Minute().Do(func() {
+		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("30m")
+	})
 	t.s.Every(1).Hour().Do(func() {
 		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("1H")
+	})
+	t.s.Every(2).Hour().Do(func() {
+		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("2H")
+	})
+	t.s.Every(4).Hour().Do(func() {
+		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("4H")
+	})
+	t.s.Every(1).Day().Do(func() {
+		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("1D")
+	})
+	t.s.Every(1).Month().Do(func() {
+		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("1M")
 	})
 }
 
