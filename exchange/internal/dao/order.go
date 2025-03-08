@@ -2,29 +2,49 @@ package dao
 
 import (
 	"context"
-	"errors"
-	"gorm.io/gorm"
-	"market/internal/model"
+	"exchange/internal/model"
 	"webCoin-common/msdb"
 	"webCoin-common/msdb/gorms"
 )
 
-type CoinDao struct {
+type ExchangeOrderDao struct {
 	conn *gorms.GormConn
 }
 
-func (d *CoinDao) FindByUnit(ctx context.Context, unit string) (*model.Coin, error) {
-	session := d.conn.Session(ctx)
-	coin := &model.Coin{}
-	err := session.Model(&model.Coin{}).Where("unit=?", unit).Take(coin).Error
-	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	return coin, err
+func (e *ExchangeOrderDao) FindOrderHistory(ctx context.Context, symbol string, page int64, size int64, memberId int64) (list []*model.ExchangeOrder, total int64, err error) {
+	session := e.conn.Session(ctx)
+	index := (page - 1) * size
+	err = session.
+		Model(&model.ExchangeOrder{}).
+		Where("symbol = ? and member_id = ?", symbol, memberId).
+		Limit(int(size)).
+		Offset(int(index)).
+		Find(&list).Error
+	err = session.
+		Model(&model.ExchangeOrder{}).
+		Where("symbol = ? and member_id = ?", symbol, memberId).
+		Count(&total).Error
+	return
 }
 
-func NewCoinDao(db *msdb.MsDB) *CoinDao {
-	return &CoinDao{
+func (e *ExchangeOrderDao) FindOrderCurrent(ctx context.Context, symbol string, page int64, size int64, memberId int64) (list []*model.ExchangeOrder, total int64, err error) {
+	session := e.conn.Session(ctx)
+	index := (page - 1) * size
+	err = session.
+		Model(&model.ExchangeOrder{}).
+		Where("symbol = ? and member_id = ? and status = ?", symbol, memberId, model.Trading).
+		Limit(int(size)).
+		Offset(int(index)).
+		Find(&list).Error
+	err = session.
+		Model(&model.ExchangeOrder{}).
+		Where("symbol = ? and member_id = ? and status = ?", symbol, memberId, model.Trading).
+		Count(&total).Error
+	return
+}
+
+func NewExchangeOrderDao(db *msdb.MsDB) *ExchangeOrderDao {
+	return &ExchangeOrderDao{
 		conn: gorms.New(db.Conn),
 	}
 }

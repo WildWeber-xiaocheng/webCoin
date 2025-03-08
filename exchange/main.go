@@ -12,6 +12,7 @@ import (
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"grpc-common/exchange/types/order"
 )
 
 var configFile = flag.String("f", "etc/conf.yaml", "the config file")
@@ -28,7 +29,7 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
-		order.RegisterExchangeOrderServer(grpcServer, server.NewExchangeOrderServer(ctx))
+		order.RegisterOrderServer(grpcServer, server.NewOrderServer(ctx))
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)
 		}

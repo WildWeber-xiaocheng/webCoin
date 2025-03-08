@@ -12,3 +12,6 @@ Kafka:
   WriteCap: 100
   ReadCap: 100
   ConsumerGroup: "kline1m-thumb-consumer"
+JWT:
+  AccessSecret: "!@#$mscoin"
+  AccessExpire: 604800

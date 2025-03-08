@@ -80,3 +80,7 @@ func (r *Routers) Group() *Routers {
 		prefix: r.prefix,
 	}
 }
+
+func (r *Routers) Use(middlewares ...rest.Middleware) {
+	r.middlewares = append(r.middlewares, middlewares...)
+}

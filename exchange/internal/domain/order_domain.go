@@ -2,25 +2,50 @@ package domain
 
 import (
 	"context"
-	"errors"
+	"exchange/internal/dao"
+	"exchange/internal/model"
 	"exchange/internal/repo"
 	"webCoin-common/msdb"
 )
 
 type ExchangeOrderDomain struct {
-	coinRepo repo.ExchangeOrderRepo
+	orderRepo repo.ExchangeOrderRepo
 }
 
-func (d *ExchangeOrderDomain) FindExchangeOrderInfo(ctx context.Context, unit string) (*model.ExchangeOrder, error) {
-	coin, err := d.coinRepo.FindByUnit(ctx, unit)
-	coin.ColdWalletAddress = ""
-	if coin == nil {
-		return nil, errors.New("币种不存在" + unit)
+func (d *ExchangeOrderDomain) FindOrderHistory(
+	ctx context.Context,
+	symbol string,
+	page int64,
+	size int64,
+	memberId int64) ([]*model.ExchangeOrderVo, int64, error) {
+	list, total, err := d.orderRepo.FindOrderHistory(ctx, symbol, page, size, memberId)
+	if err != nil {
+		return nil, 0, err
 	}
+	lv := make([]*model.ExchangeOrderVo, len(list))
+	for i, v := range list {
+		lv[i] = v.ToVo()
+	}
+	return lv, total, err
+}
 
-	return coin, err
+func (d *ExchangeOrderDomain) FindOrderCurrent(
+	ctx context.Context,
+	symbol string,
+	page int64,
+	size int64,
+	memberId int64) ([]*model.ExchangeOrderVo, int64, error) {
+	list, total, err := d.orderRepo.FindOrderCurrent(ctx, symbol, page, size, memberId)
+	if err != nil {
+		return nil, 0, err
+	}
+	lv := make([]*model.ExchangeOrderVo, len(list))
+	for i, v := range list {
+		lv[i] = v.ToVo()
+	}
+	return lv, total, err
 }
 
 func NewExchangeOrderDomain(db *msdb.MsDB) *ExchangeOrderDomain {
-	return &ExchangeOrderDomain{coinRepo: dao.NewExchangeOrderDao(db)}
+	return &ExchangeOrderDomain{orderRepo: dao.NewExchangeOrderDao(db)}
 }

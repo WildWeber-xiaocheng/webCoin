@@ -3,22 +3,18 @@ package svc
 import (
 	"exchange-api/internal/config"
 	"github.com/zeromicro/go-zero/zrpc"
-	"grpc-common/market/mclient"
+	"grpc-common/exchange/eclient"
 )
 
 type ServiceContext struct {
-	Config          config.Config
-	ExchangeRateRpc mclient.ExchangeRate
-	MarketRpc       mclient.Market
+	Config   config.Config
+	OrderRpc eclient.Order
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
-	//初始化processor
-	//kafaCli := database.NewKafkaClient(c.KafKa)
-	market := mclient.NewMarket(zrpc.MustNewClient(c.MarketRpc))
+	order := eclient.NewOrder(zrpc.MustNewClient(c.ExchangeRpc))
 	return &ServiceContext{
-		Config:          c,
-		ExchangeRateRpc: mclient.NewExchangeRate(zrpc.MustNewClient(c.MarketRpc)),
-		MarketRpc:       market,
+		Config:   c,
+		OrderRpc: order,
 	}
 }

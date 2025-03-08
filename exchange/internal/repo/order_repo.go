@@ -6,5 +6,6 @@ import (
 )
 
 type ExchangeOrderRepo interface {
-	FindOrderPage(ctx context.Context, memberId int64) (coin *model.ExchangeOrder, err error)
+	FindOrderHistory(ctx context.Context, symbol string, page int64, size int64, memberId int64) (list []*model.ExchangeOrder, total int64, err error)
+	FindOrderCurrent(ctx context.Context, symbol string, page int64, size int64, memberId int64) (list []*model.ExchangeOrder, total int64, err error)
 }

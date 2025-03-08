@@ -5,22 +5,29 @@
 package server
 
 import (
+	"context"
+	"exchange/internal/logic"
 	"exchange/internal/svc"
-	"grpc-common/market/types/market"
+	"grpc-common/exchange/types/order"
 )
 
-type MarketServer struct {
+type OrderServer struct {
 	svcCtx *svc.ServiceContext
-	market.UnimplementedMarketServer
+	order.UnimplementedOrderServer
 }
 
-//func (e *MarketServer) FindSymbolThumbTrend(ctx context.Context, req *market.MarketReq) (*market.SymbolThumbRes, error) {
-//	l := logic.NewMarketLogic(ctx, e.svcCtx)
-//	return l.FindSymbolThumbTrend(req)
-//}
+func (e *OrderServer) FindOrderHistory(ctx context.Context, req *order.OrderReq) (*order.OrderRes, error) {
+	l := logic.NewExchangeOrderLogic(ctx, e.svcCtx)
+	return l.FindOrderHistory(req)
+}
 
-func NewMarketServer(svcCtx *svc.ServiceContext) *MarketServer {
-	return &MarketServer{
+func (e *OrderServer) FindOrderCurrent(ctx context.Context, req *order.OrderReq) (*order.OrderRes, error) {
+	l := logic.NewExchangeOrderLogic(ctx, e.svcCtx)
+	return l.FindOrderCurrent(req)
+}
+
+func NewOrderServer(svcCtx *svc.ServiceContext) *OrderServer {
+	return &OrderServer{
 		svcCtx: svcCtx,
 	}
 }
