@@ -8,4 +8,6 @@ use (
 	./ucenter
 	./ucenter-api
 	./webCoin-common
+	./exchange
+	./exchange-api
 )
