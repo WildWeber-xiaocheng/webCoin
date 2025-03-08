@@ -111,7 +111,7 @@ type Coin struct {
 //	 double close = 3;
 //	 double high = 4;
 //	 double low = 5;
-//	 double volume = 6;
+//	 double volume = 6; //成交量
 //	}
 type HistoryKline struct {
 	List [][]any

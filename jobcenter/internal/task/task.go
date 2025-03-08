@@ -47,6 +47,9 @@ func (t *Task) Run() {
 	t.s.Every(1).Day().Do(func() {
 		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("1D")
 	})
+	t.s.Every(1).Week().Do(func() {
+		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("1W")
+	})
 	t.s.Every(1).Month().Do(func() {
 		kline.NewKline(t.ctx.Config.Okx, t.ctx.MongoClient, t.ctx.KafkaClient).Do("1M")
 	})

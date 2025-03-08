@@ -9,6 +9,9 @@ message MarketReq {
   string ip = 1;
   string symbol = 2;
   string unit = 3;
+  int64 from = 4;
+  int64 to = 5;
+  string resolution = 6;
 }
 message SymbolThumbRes{
   repeated CoinThumb list = 1;
@@ -93,8 +96,21 @@ message Coin{
   double minRechargeAmount  = 28;
 }
 
+message History {
+  int64 time = 1;
+  double open = 2;
+  double close = 3;
+  double high = 4;
+  double low = 5;
+  double volume = 6;
+}
+message HistoryRes {
+  repeated History list = 1;
+}
+
 service Market {
   rpc FindSymbolThumbTrend(MarketReq) returns(SymbolThumbRes);
   rpc FindSymbolInfo(MarketReq) returns(ExchangeCoin);
   rpc FindCoinInfo(MarketReq) returns(Coin);
+  rpc HistoryKline(MarketReq) returns(HistoryRes);
 }

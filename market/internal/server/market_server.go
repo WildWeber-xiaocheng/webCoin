@@ -31,6 +31,11 @@ func (e *MarketServer) FindCoinInfo(ctx context.Context, req *market.MarketReq) 
 	return l.FindCoinInfo(req)
 }
 
+func (e *MarketServer) HistoryKline(ctx context.Context, req *market.MarketReq) (*market.HistoryRes, error) {
+	l := logic.NewMarketLogic(ctx, e.svcCtx)
+	return l.HistoryKline(req)
+}
+
 func NewMarketServer(svcCtx *svc.ServiceContext) *MarketServer {
 	return &MarketServer{
 		svcCtx: svcCtx,

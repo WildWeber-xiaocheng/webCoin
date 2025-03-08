@@ -17,11 +17,13 @@ type (
 	SymbolThumbRes = market.SymbolThumbRes
 	ExchangeCoin   = market.ExchangeCoin
 	Coin           = market.Coin
+	HistoryRes     = market.HistoryRes
 
 	Market interface {
 		FindSymbolThumbTrend(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*SymbolThumbRes, error)
 		FindSymbolInfo(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*ExchangeCoin, error)
 		FindCoinInfo(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*Coin, error)
+		HistoryKline(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*HistoryRes, error)
 	}
 
 	defaultMarket struct {
@@ -48,4 +50,9 @@ func (m *defaultMarket) FindSymbolInfo(ctx context.Context, in *MarketReq, opts 
 func (m *defaultMarket) FindCoinInfo(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*Coin, error) {
 	client := market.NewMarketClient(m.cli.Conn())
 	return client.FindCoinInfo(ctx, in, opts...)
+}
+
+func (m *defaultMarket) HistoryKline(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*HistoryRes, error) {
+	client := market.NewMarketClient(m.cli.Conn())
+	return client.HistoryKline(ctx, in, opts...)
 }

@@ -35,12 +35,16 @@ func (d *KlineDao) FindBySymbol(ctx context.Context, symbol, period string, coun
 
 // 按照时间范围查询
 // from: 起始时间 end: 结束时间
-func (d *KlineDao) FindBySymbolTime(ctx context.Context, symbol, period string, from, end int64) (list []*model.Kline, err error) {
+func (d *KlineDao) FindBySymbolTime(ctx context.Context, symbol, period string, from, end int64, sort string) (list []*model.Kline, err error) {
 	mk := &model.Kline{}
 	collection := d.db.Collection(mk.Table(symbol, period))
 	//1是升序 -1 是降序
+	sortInt := -1
+	if "asc" == sort {
+		sortInt = 1
+	}
 	cur, err := collection.Find(ctx, bson.D{{Key: "time", Value: bson.D{{"$gte", from}, {"$lte", end}}}}, &options.FindOptions{
-		Sort: bson.D{{"time", -1}},
+		Sort: bson.D{{"time", sortInt}},
 	})
 	if err != nil {
 		return
