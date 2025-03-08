@@ -11,6 +11,7 @@ type Config struct {
 	CacheRedis cache.CacheConf
 	Captcha    CaptchaConf
 	JWT        AuthConfig
+	MarketRpc  zrpc.RpcClientConf
 }
 
 type MysqlConfig struct {

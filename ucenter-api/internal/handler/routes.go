@@ -48,5 +48,6 @@ func (r *Routers) Group() *Routers {
 }
 
 func (r *Routers) Use(middlewares ...rest.Middleware) {
-	r.middlewares = middlewares
+	//r.middlewares = middlewares
+	r.middlewares = append(r.middlewares, middlewares...)
 }
