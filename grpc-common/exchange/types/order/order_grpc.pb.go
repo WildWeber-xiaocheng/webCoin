@@ -24,6 +24,9 @@ const _ = grpc.SupportPackageIsVersion7
 type OrderClient interface {
 	FindOrderHistory(ctx context.Context, in *OrderReq, opts ...grpc.CallOption) (*OrderRes, error)
 	FindOrderCurrent(ctx context.Context, in *OrderReq, opts ...grpc.CallOption) (*OrderRes, error)
+	Add(ctx context.Context, in *OrderReq, opts ...grpc.CallOption) (*AddOrderRes, error)
+	FindByOrderId(ctx context.Context, in *OrderReq, opts ...grpc.CallOption) (*ExchangeOrderOrigin, error)
+	CancelOrder(ctx context.Context, in *OrderReq, opts ...grpc.CallOption) (*CancelOrderRes, error)
 }
 
 type orderClient struct {
@@ -52,12 +55,42 @@ func (c *orderClient) FindOrderCurrent(ctx context.Context, in *OrderReq, opts .
 	return out, nil
 }
 
+func (c *orderClient) Add(ctx context.Context, in *OrderReq, opts ...grpc.CallOption) (*AddOrderRes, error) {
+	out := new(AddOrderRes)
+	err := c.cc.Invoke(ctx, "/order.Order/Add", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orderClient) FindByOrderId(ctx context.Context, in *OrderReq, opts ...grpc.CallOption) (*ExchangeOrderOrigin, error) {
+	out := new(ExchangeOrderOrigin)
+	err := c.cc.Invoke(ctx, "/order.Order/FindByOrderId", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orderClient) CancelOrder(ctx context.Context, in *OrderReq, opts ...grpc.CallOption) (*CancelOrderRes, error) {
+	out := new(CancelOrderRes)
+	err := c.cc.Invoke(ctx, "/order.Order/CancelOrder", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrderServer is the server API for Order service.
 // All implementations must embed UnimplementedOrderServer
 // for forward compatibility
 type OrderServer interface {
 	FindOrderHistory(context.Context, *OrderReq) (*OrderRes, error)
 	FindOrderCurrent(context.Context, *OrderReq) (*OrderRes, error)
+	Add(context.Context, *OrderReq) (*AddOrderRes, error)
+	FindByOrderId(context.Context, *OrderReq) (*ExchangeOrderOrigin, error)
+	CancelOrder(context.Context, *OrderReq) (*CancelOrderRes, error)
 	mustEmbedUnimplementedOrderServer()
 }
 
@@ -70,6 +103,15 @@ func (UnimplementedOrderServer) FindOrderHistory(context.Context, *OrderReq) (*O
 }
 func (UnimplementedOrderServer) FindOrderCurrent(context.Context, *OrderReq) (*OrderRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindOrderCurrent not implemented")
+}
+func (UnimplementedOrderServer) Add(context.Context, *OrderReq) (*AddOrderRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
+}
+func (UnimplementedOrderServer) FindByOrderId(context.Context, *OrderReq) (*ExchangeOrderOrigin, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindByOrderId not implemented")
+}
+func (UnimplementedOrderServer) CancelOrder(context.Context, *OrderReq) (*CancelOrderRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelOrder not implemented")
 }
 func (UnimplementedOrderServer) mustEmbedUnimplementedOrderServer() {}
 
@@ -120,6 +162,60 @@ func _Order_FindOrderCurrent_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Order_Add_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OrderReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServer).Add(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/order.Order/Add",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServer).Add(ctx, req.(*OrderReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Order_FindByOrderId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OrderReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServer).FindByOrderId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/order.Order/FindByOrderId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServer).FindByOrderId(ctx, req.(*OrderReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Order_CancelOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OrderReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServer).CancelOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/order.Order/CancelOrder",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServer).CancelOrder(ctx, req.(*OrderReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Order_ServiceDesc is the grpc.ServiceDesc for Order service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +230,18 @@ var Order_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FindOrderCurrent",
 			Handler:    _Order_FindOrderCurrent_Handler,
+		},
+		{
+			MethodName: "Add",
+			Handler:    _Order_Add_Handler,
+		},
+		{
+			MethodName: "FindByOrderId",
+			Handler:    _Order_FindByOrderId_Handler,
+		},
+		{
+			MethodName: "CancelOrder",
+			Handler:    _Order_CancelOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

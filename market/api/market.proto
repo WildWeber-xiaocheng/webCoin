@@ -63,6 +63,7 @@ message ExchangeCoin {
   int64 StartTime = 26;
   int64 Visible = 27;
   int64 Zone = 28;
+  string coinSymbol = 29;
 }
 
 message Coin{

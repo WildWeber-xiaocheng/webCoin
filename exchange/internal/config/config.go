@@ -11,4 +11,6 @@ type Config struct {
 	Mysql      database.MysqlConfig
 	CacheRedis cache.CacheConf
 	Mongo      database.MongoConfig
+	UCenterRpc zrpc.RpcClientConf
+	MarketRpc  zrpc.RpcClientConf
 }

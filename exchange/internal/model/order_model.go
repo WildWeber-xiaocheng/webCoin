@@ -1,6 +1,9 @@
 package model
 
-import "github.com/jinzhu/copier"
+import (
+	"github.com/jinzhu/copier"
+	"webCoin-common/enum"
+)
 
 type ExchangeOrder struct {
 	Id            int64   `gorm:"column:id"`
@@ -34,7 +37,7 @@ const (
 	OverTimed
 )
 
-var statusMap = map[int]string{
+var StatusMap = enum.Enum{
 	Trading:   "TRADING",
 	Completed: "COMPLETED",
 	Canceled:  "CANCELED",
@@ -47,7 +50,7 @@ const (
 	SELL
 )
 
-var directionMap = map[int]string{
+var DirectionMap = enum.Enum{
 	BUY:  "BUY",
 	SELL: "SELL",
 }
@@ -58,7 +61,7 @@ const (
 	LimitPrice
 )
 
-var typeMap = map[int]string{
+var TypeMap = enum.Enum{
 	MarketPrice: "MARKET_PRICE",
 	LimitPrice:  "LIMIT_PRICE",
 }
@@ -85,8 +88,8 @@ type ExchangeOrderVo struct {
 func (old *ExchangeOrder) ToVo() *ExchangeOrderVo {
 	eo := &ExchangeOrderVo{}
 	copier.Copy(eo, old)
-	eo.Status = statusMap[old.Status]
-	eo.Direction = directionMap[old.Direction]
-	eo.Type = typeMap[old.Type]
+	eo.Status = StatusMap.Value(old.Status)
+	eo.Direction = DirectionMap.Value(old.Direction)
+	eo.Type = TypeMap.Value(old.Type)
 	return eo
 }

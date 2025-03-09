@@ -14,3 +14,15 @@ Mongo:
   Username: "root"
   Password: "root123456"
   DataBase: "mscoin"
+UCenterRpc:
+  Etcd:
+    Hosts:
+      - 127.0.0.1:2379
+    Key: ucenter.rpc
+  NonBlock: true
+MarketRpc:
+  Etcd:
+    Hosts:
+      - 127.0.0.1:2379
+    Key: market.rpc
+  NonBlock: true

@@ -14,4 +14,6 @@ func RegisterHandlers(r *Routers, serverCtx *svc.ServiceContext) {
 	orderGroup.Post("/order/history", order.History)
 	//当前委托订单：正在交易的状态的订单
 	orderGroup.Post("/order/current", order.Current)
+	//添加委托订单
+	orderGroup.Post("/order/add", order.Add)
 }
