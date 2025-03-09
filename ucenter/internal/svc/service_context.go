@@ -2,6 +2,7 @@ package svc
 
 import (
 	"github.com/zeromicro/go-zero/core/stores/cache"
+	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/zrpc"
 	"grpc-common/exchange/eclient"
 	"grpc-common/market/mclient"
@@ -25,7 +26,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	kafkaClient := database.NewKafkaClient(c.Kafka)
 	kafkaClient.StartRead("add-exchange-order")
 	order := eclient.NewOrder(zrpc.MustNewClient(c.ExchangeRpc))
-	go consumer.ExchangeOrderAdd(kafkaClient, order, mysql)
+	conf := c.CacheRedis[0].RedisConf
+	newRedis := redis.MustNewRedis(conf)
+	go consumer.ExchangeOrderAdd(newRedis, kafkaClient, order, mysql)
 	return &ServiceContext{
 		Config:    c,
 		Cache:     redisCache,

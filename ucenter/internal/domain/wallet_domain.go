@@ -36,7 +36,7 @@ func (d *MemberWalletDomain) FindWalletBySymbol(ctx context.Context, id int64, n
 }
 
 // 冻结资金
-func (d *MemberWalletDomain) Freeze(ctx context.Context, userId int64, money float64, symbol string) error {
+func (d *MemberWalletDomain) Freeze(ctx context.Context, conn msdb.DbConn, userId int64, money float64, symbol string) error {
 	mw, err := d.memberWalletRepo.FindByIdAndCoinName(ctx, userId, symbol)
 	if err != nil {
 		return err
@@ -44,7 +44,8 @@ func (d *MemberWalletDomain) Freeze(ctx context.Context, userId int64, money flo
 	if mw.Balance < money {
 		return errors.New("余额不足")
 	}
-	err = d.memberWalletRepo.UpdateFreeze(ctx, userId, money, symbol)
+	//只在更新数据的时候使用事务
+	err = d.memberWalletRepo.UpdateFreeze(ctx, conn, userId, money, symbol)
 	return err
 }
 

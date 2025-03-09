@@ -13,8 +13,9 @@ type MemberWalletDao struct {
 	conn *gorms.GormConn
 }
 
-func (m *MemberWalletDao) UpdateFreeze(ctx context.Context, userId int64, money float64, symbol string) error {
-	session := m.conn.Session(ctx)
+func (m *MemberWalletDao) UpdateFreeze(ctx context.Context, conn msdb.DbConn, userId int64, money float64, symbol string) error {
+	m.conn = conn.(*gorms.GormConn)
+	session := m.conn.Tx(ctx)
 	query := "update member_wallet set balance=balance-?,frozen_balance=frozen_balance+? where member_id=? and coin_name=? and balance > ?"
 	exec := session.Exec(query, money, money, userId, symbol, money)
 	err := exec.Error

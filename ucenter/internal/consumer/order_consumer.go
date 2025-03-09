@@ -4,13 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/redis"
 	"grpc-common/exchange/eclient"
 	"grpc-common/exchange/types/order"
 	"time"
 	"ucenter/internal/database"
 	"ucenter/internal/domain"
 	"webCoin-common/msdb"
+	"webCoin-common/msdb/tran"
 )
 
 type OrderAdd struct {
@@ -24,7 +27,7 @@ type OrderAdd struct {
 }
 
 // 消费kafka中订单数据
-func ExchangeOrderAdd(client *database.KafkaClient, orderRpc eclient.Order, db *msdb.MsDB) {
+func ExchangeOrderAdd(redisClient *redis.Redis, client *database.KafkaClient, orderRpc eclient.Order, db *msdb.MsDB) {
 	for {
 		kafkaData := client.Read()
 		//if kafkaData == nil {
@@ -62,44 +65,57 @@ func ExchangeOrderAdd(client *database.KafkaClient, orderRpc eclient.Order, db *
 			logx.Error("orderId: " + orderId + "已经被操作过")
 			continue
 		}
-
-		walletDomain := domain.NewMemberWalletDomain(db)
-		if addData.Direction == 0 { //买
-			//buy baseSymbol
-			err := walletDomain.Freeze(ctx, addData.UserId, addData.Money, addData.BaseSymbol)
-			if err != nil {
-				//取消订单，资金冻结失败
-				cancelOrder(client, orderRpc, ctx, orderId, exchangeOrder, kafkaData)
-				continue
-			}
-		} else if addData.Direction == 1 { //卖
-			//sell coinSymbol
-			err := walletDomain.Freeze(ctx, addData.UserId, addData.Money, addData.CoinSymbol)
-			if err != nil {
-				//重新消费
-				cancelOrder(client, orderRpc, ctx, orderId, exchangeOrder, kafkaData)
-				continue
-			}
+		//使用go-zero自带的分布式锁
+		lock := redis.NewRedisLock(redisClient, "exchange_order::"+fmt.Sprintf("%d::%s", addData.UserId, orderId))
+		//查询订单信息 如果是正在交易中 继续 否则return
+		acquireCtx, err := lock.AcquireCtx(ctx)
+		if err != nil {
+			logx.Error(err)
+			logx.Info("已经有别的进程处理此消息")
+			continue
 		}
-		//都完成后 通知订单进行状态变更 需要保证一定发送成功
-		//将订单的状态由init改为trading
-		for {
-			m := make(map[string]any)
-			m["userId"] = addData.UserId
-			m["orderId"] = orderId
-			marshal, _ := json.Marshal(m)
-			data := database.KafkaData{
-				Topic: "exchange_order_init_complete",
-				Key:   []byte(orderId),
-				Data:  marshal,
-			}
-			err := client.SendSync(data)
+		if acquireCtx {
+			transaction := tran.NewTransaction(db.Conn)
+			walletDomain := domain.NewMemberWalletDomain(db)
+			err = transaction.Action(func(conn msdb.DbConn) error {
+				if addData.Direction == 0 { //买
+					//buy baseSymbol
+					err := walletDomain.Freeze(ctx, conn, addData.UserId, addData.Money, addData.BaseSymbol)
+					return err
+				} else if addData.Direction == 1 { //卖
+					//sell coinSymbol
+					err := walletDomain.Freeze(ctx, conn, addData.UserId, addData.Money, addData.CoinSymbol)
+					return err
+				}
+				return nil
+			})
 			if err != nil {
 				logx.Error(err)
-				time.Sleep(250 * time.Millisecond)
+				cancelOrder(client, orderRpc, ctx, orderId, exchangeOrder, kafkaData)
 				continue
 			}
-			break
+			//都完成后 通知订单进行状态变更 需要保证一定发送成功
+			//将订单的状态由init改为trading
+			for {
+				m := make(map[string]any)
+				m["userId"] = addData.UserId
+				m["orderId"] = orderId
+				marshal, _ := json.Marshal(m)
+				data := database.KafkaData{
+					Topic: "exchange_order_init_complete",
+					Key:   []byte(orderId),
+					Data:  marshal,
+				}
+				err := client.SendSync(data)
+				if err != nil {
+					logx.Error(err)
+					time.Sleep(250 * time.Millisecond)
+					continue
+				}
+				logx.Info("发送exchange_order_init_complete 消息成功：" + orderId)
+				break
+			}
+			lock.Release()
 		}
 	}
 }
