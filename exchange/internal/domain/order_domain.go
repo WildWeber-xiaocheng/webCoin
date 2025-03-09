@@ -109,6 +109,19 @@ func (d *ExchangeOrderDomain) AddOrder(
 	return money, nil
 }
 
+func (d *ExchangeOrderDomain) FindByOrderId(ctx context.Context, orderId string) (*model.ExchangeOrder, error) {
+	exchangeOrder, err := d.orderRepo.FindByOrderId(ctx, orderId)
+	if err == nil && exchangeOrder == nil {
+		return nil, errors.New("订单号不存在")
+	}
+	return exchangeOrder, err
+}
+
+func (d *ExchangeOrderDomain) UpdateOrderStatusCancel(ctx context.Context, orderId string, updateStatus int) error {
+	//todo 这里是按照文档来写的，不是视频P44
+	return d.orderRepo.UpdateOrderStatusCancel(ctx, orderId, model.Canceled, updateStatus, time.Now().UnixMilli())
+}
+
 func NewExchangeOrderDomain(db *msdb.MsDB) *ExchangeOrderDomain {
 	return &ExchangeOrderDomain{orderRepo: dao.NewExchangeOrderDao(db)}
 }

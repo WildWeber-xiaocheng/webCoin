@@ -210,11 +210,23 @@ func (l *ExchangeOrderLogic) Add(req *order.OrderReq) (*order.AddOrderRes, error
 }
 
 func (l *ExchangeOrderLogic) FindByOrderId(req *order.OrderReq) (*order.ExchangeOrderOrigin, error) {
-	return nil, nil
+	orderId := req.OrderId
+	exOrder, err := l.exchangeOrderDomain.FindByOrderId(l.ctx, orderId)
+	if err != nil {
+		return nil, err
+	}
+	res := &order.ExchangeOrderOrigin{}
+	copier.Copy(res, exOrder)
+	return res, nil
 }
 
 func (l *ExchangeOrderLogic) CancelOrder(req *order.OrderReq) (*order.CancelOrderRes, error) {
-	return nil, nil
+	orderId := req.OrderId
+	err := l.exchangeOrderDomain.UpdateOrderStatusCancel(l.ctx, orderId, int(req.UpdateStatus))
+	if err != nil {
+		return nil, err
+	}
+	return &order.CancelOrderRes{OrderId: orderId}, nil
 }
 
 func NewExchangeOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ExchangeOrderLogic {

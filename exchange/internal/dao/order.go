@@ -2,13 +2,34 @@ package dao
 
 import (
 	"context"
+	"errors"
 	"exchange/internal/model"
+	"gorm.io/gorm"
 	"webCoin-common/msdb"
 	"webCoin-common/msdb/gorms"
 )
 
 type ExchangeOrderDao struct {
 	conn *gorms.GormConn
+}
+
+func (e *ExchangeOrderDao) UpdateOrderStatusCancel(ctx context.Context, orderId string, status int, updateStatus int, cancelTime int64) error {
+	session := e.conn.Session(ctx)
+	err := session.Model(&model.ExchangeOrder{}).
+		Where("order_id=? and status=?", orderId, updateStatus).
+		Update("status=?", status).
+		Update("canceled_time=?", cancelTime).
+		Error
+	return err
+}
+
+func (e *ExchangeOrderDao) FindByOrderId(ctx context.Context, orderId string) (order *model.ExchangeOrder, err error) {
+	session := e.conn.Session(ctx)
+	err = session.Model(&model.ExchangeOrder{}).Where("order_id=?", orderId).Take(&order).Error
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return
 }
 
 func (e *ExchangeOrderDao) Save(ctx context.Context, conn msdb.DbConn, order *model.ExchangeOrder) error {

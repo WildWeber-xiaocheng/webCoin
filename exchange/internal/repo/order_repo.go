@@ -11,4 +11,6 @@ type ExchangeOrderRepo interface {
 	FindOrderCurrent(ctx context.Context, symbol string, page int64, size int64, memberId int64) (list []*model.ExchangeOrder, total int64, err error)
 	FindCurrentTradingCount(ctx context.Context, userId int64, symbol string, direction int) (int64, error)
 	Save(ctx context.Context, conn msdb.DbConn, order *model.ExchangeOrder) error
+	FindByOrderId(ctx context.Context, orderId string) (*model.ExchangeOrder, error)
+	UpdateOrderStatusCancel(ctx context.Context, orderId string, status int, updateStatus int, cancelTime int64) error
 }
