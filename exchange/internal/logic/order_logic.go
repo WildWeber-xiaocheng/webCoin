@@ -222,7 +222,7 @@ func (l *ExchangeOrderLogic) FindByOrderId(req *order.OrderReq) (*order.Exchange
 
 func (l *ExchangeOrderLogic) CancelOrder(req *order.OrderReq) (*order.CancelOrderRes, error) {
 	orderId := req.OrderId
-	err := l.exchangeOrderDomain.UpdateOrderStatusCancel(l.ctx, orderId, int(req.UpdateStatus))
+	err := l.exchangeOrderDomain.UpdateOrderStatusCancel(l.ctx, orderId)
 	if err != nil {
 		return nil, err
 	}
@@ -230,12 +230,13 @@ func (l *ExchangeOrderLogic) CancelOrder(req *order.OrderReq) (*order.CancelOrde
 }
 
 func NewExchangeOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ExchangeOrderLogic {
+	orderDomain := domain.NewExchangeOrderDomain(svcCtx.Db)
 	return &ExchangeOrderLogic{
 		ctx:                 ctx,
 		svcCtx:              svcCtx,
 		Logger:              logx.WithContext(ctx),
-		exchangeOrderDomain: domain.NewExchangeOrderDomain(svcCtx.Db),
+		exchangeOrderDomain: orderDomain,
 		transaction:         tran.NewTransaction(svcCtx.Db.Conn),
-		kafkaDomain:         domain.NewKafkaDomain(svcCtx.KafkaClient),
+		kafkaDomain:         domain.NewKafkaDomain(svcCtx.KafkaClient, orderDomain),
 	}
 }

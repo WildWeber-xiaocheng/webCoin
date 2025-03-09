@@ -58,7 +58,7 @@ func ExchangeOrderAdd(client *database.KafkaClient, orderRpc eclient.Order, db *
 		} else if exchangeOrder == nil {
 			logx.Error("orderId: " + orderId + "不存在")
 			continue
-		} else if exchangeOrder.Status != 0 {
+		} else if exchangeOrder.Status != 4 { //4表示订单的状态为init
 			logx.Error("orderId: " + orderId + "已经被操作过")
 			continue
 		}
@@ -80,6 +80,26 @@ func ExchangeOrderAdd(client *database.KafkaClient, orderRpc eclient.Order, db *
 				cancelOrder(client, orderRpc, ctx, orderId, exchangeOrder, kafkaData)
 				continue
 			}
+		}
+		//都完成后 通知订单进行状态变更 需要保证一定发送成功
+		//将订单的状态由init改为trading
+		for {
+			m := make(map[string]any)
+			m["userId"] = addData.UserId
+			m["orderId"] = orderId
+			marshal, _ := json.Marshal(m)
+			data := database.KafkaData{
+				Topic: "exchange_order_init_complete",
+				Key:   []byte(orderId),
+				Data:  marshal,
+			}
+			err := client.SendSync(data)
+			if err != nil {
+				logx.Error(err)
+				time.Sleep(250 * time.Millisecond)
+				continue
+			}
+			break
 		}
 	}
 }

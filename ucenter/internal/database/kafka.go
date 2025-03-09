@@ -154,3 +154,23 @@ func (k *KafkaClient) Read() KafkaData {
 func (k *KafkaClient) RPut(data KafkaData) {
 	k.readChan <- data
 }
+
+func (k *KafkaClient) SendSync(data KafkaData) error {
+	w := &kafka.Writer{
+		Addr:     kafka.TCP(k.c.Addr),
+		Balancer: &kafka.LeastBytes{},
+	}
+	k.w = w
+	messages := []kafka.Message{
+		{
+			Topic: data.Topic,
+			Key:   data.Key,
+			Value: data.Data,
+		},
+	}
+	var err error
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = k.w.WriteMessages(ctx, messages...)
+	return err
+}

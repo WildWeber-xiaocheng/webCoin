@@ -13,12 +13,20 @@ type ExchangeOrderDao struct {
 	conn *gorms.GormConn
 }
 
-func (e *ExchangeOrderDao) UpdateOrderStatusCancel(ctx context.Context, orderId string, status int, updateStatus int, cancelTime int64) error {
+func (e *ExchangeOrderDao) UpdateOrderStatusTrading(ctx context.Context, orderId string) error {
 	session := e.conn.Session(ctx)
 	err := session.Model(&model.ExchangeOrder{}).
-		Where("order_id=? and status=?", orderId, updateStatus).
-		Update("status=?", status).
-		Update("canceled_time=?", cancelTime).
+		Where("order_id=?", orderId).
+		Update("status", model.Trading).
+		Error
+	return err
+}
+
+func (e *ExchangeOrderDao) UpdateOrderStatusCancel(ctx context.Context, orderId string) error {
+	session := e.conn.Session(ctx)
+	err := session.Model(&model.ExchangeOrder{}).
+		Where("order_id=?", orderId).
+		Update("status", model.Canceled).
 		Error
 	return err
 }

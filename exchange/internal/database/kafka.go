@@ -169,3 +169,7 @@ func (k *KafkaClient) Read() KafkaData {
 	msg := <-k.readChan
 	return msg
 }
+
+func (k *KafkaClient) RPut(data KafkaData) {
+	k.readChan <- data
+}

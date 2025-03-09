@@ -35,6 +35,7 @@ const (
 	Completed
 	Canceled
 	OverTimed
+	Init
 )
 
 var StatusMap = enum.Enum{

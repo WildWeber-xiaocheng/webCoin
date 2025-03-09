@@ -63,8 +63,9 @@ func (d *ExchangeOrderDomain) AddOrder(
 	ctx context.Context, conn msdb.DbConn,
 	order *model.ExchangeOrder, coin *mclient.ExchangeCoin,
 	baseWallet *ucclient.MemberWallet, coinWallet *ucclient.MemberWallet) (float64, error) {
-	//设置订单状态为正在交易，交易数量初始化为0，订单创建时间为当前时间
-	order.Status = model.Trading
+	//设置订单状态为init状态，交易数量初始化为0，订单创建时间为当前时间
+	//订单状态的改变在消费者端，订单为init时，订单不在前端显示
+	order.Status = model.Init
 	order.TradedAmount = 0
 	order.Time = time.Now().UnixMilli()
 	//todo 使用雪花算法
@@ -117,9 +118,12 @@ func (d *ExchangeOrderDomain) FindByOrderId(ctx context.Context, orderId string)
 	return exchangeOrder, err
 }
 
-func (d *ExchangeOrderDomain) UpdateOrderStatusCancel(ctx context.Context, orderId string, updateStatus int) error {
-	//todo 这里是按照文档来写的，不是视频P44
-	return d.orderRepo.UpdateOrderStatusCancel(ctx, orderId, model.Canceled, updateStatus, time.Now().UnixMilli())
+func (d *ExchangeOrderDomain) UpdateOrderStatusCancel(ctx context.Context, orderId string) error {
+	return d.orderRepo.UpdateOrderStatusCancel(ctx, orderId)
+}
+
+func (d *ExchangeOrderDomain) UpdateOrderStatusTrading(ctx context.Context, orderId string) error {
+	return d.orderRepo.UpdateOrderStatusTrading(ctx, orderId)
 }
 
 func NewExchangeOrderDomain(db *msdb.MsDB) *ExchangeOrderDomain {
