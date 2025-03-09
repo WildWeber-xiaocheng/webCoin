@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"github.com/jinzhu/copier"
 	"grpc-common/market/mclient"
 	"ucenter/internal/dao"
@@ -32,6 +33,19 @@ func (d *MemberWalletDomain) FindWalletBySymbol(ctx context.Context, id int64, n
 	copier.Copy(nwc, mw)
 	nwc.Coin = coin
 	return nwc, nil
+}
+
+// 冻结资金
+func (d *MemberWalletDomain) Freeze(ctx context.Context, userId int64, money float64, symbol string) error {
+	mw, err := d.memberWalletRepo.FindByIdAndCoinName(ctx, userId, symbol)
+	if err != nil {
+		return err
+	}
+	if mw.Balance < money {
+		return errors.New("余额不足")
+	}
+	err = d.memberWalletRepo.UpdateFreeze(ctx, userId, money, symbol)
+	return err
 }
 
 func NewMemberWalletDomain(db *msdb.MsDB) *MemberWalletDomain {

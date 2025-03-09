@@ -3,8 +3,10 @@ package svc
 import (
 	"github.com/zeromicro/go-zero/core/stores/cache"
 	"github.com/zeromicro/go-zero/zrpc"
+	"grpc-common/exchange/eclient"
 	"grpc-common/market/mclient"
 	"ucenter/internal/config"
+	"ucenter/internal/consumer"
 	"ucenter/internal/database"
 	"webCoin-common/msdb"
 )
@@ -17,11 +19,17 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
-	redisCache := cache.New(c.CacheRedis, nil, cache.NewStat("webCoin"), nil, func(o *cache.Options) {})
+	redisCache := cache.New(c.CacheRedis, nil, cache.NewStat("webCoin"),
+		nil, func(o *cache.Options) {})
+	mysql := database.ConnMysql(c.Mysql.DataSource)
+	kafkaClient := database.NewKafkaClient(c.Kafka)
+	kafkaClient.StartRead("add-exchange-order")
+	order := eclient.NewOrder(zrpc.MustNewClient(c.ExchangeRpc))
+	go consumer.ExchangeOrderAdd(kafkaClient, order, mysql)
 	return &ServiceContext{
 		Config:    c,
 		Cache:     redisCache,
-		Db:        database.ConnMysql(c.Mysql.DataSource),
+		Db:        mysql,
 		MarketRpc: mclient.NewMarket(zrpc.MustNewClient(c.MarketRpc)),
 	}
 }

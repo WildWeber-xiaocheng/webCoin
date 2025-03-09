@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"errors"
 	"gorm.io/gorm"
 	"ucenter/internal/model"
 	"webCoin-common/msdb"
@@ -10,6 +11,21 @@ import (
 
 type MemberWalletDao struct {
 	conn *gorms.GormConn
+}
+
+func (m *MemberWalletDao) UpdateFreeze(ctx context.Context, userId int64, money float64, symbol string) error {
+	session := m.conn.Session(ctx)
+	query := "update member_wallet set balance=balance-?,frozen_balance=frozen_balance+? where member_id=? and coin_name=? and balance > ?"
+	exec := session.Exec(query, money, money, userId, symbol, money)
+	err := exec.Error
+	if err != nil {
+		return err
+	}
+	affected := exec.RowsAffected
+	if affected <= 0 {
+		return errors.New("no update row")
+	}
+	return nil
 }
 
 func (m *MemberWalletDao) Save(ctx context.Context, mw *model.MemberWallet) error {
