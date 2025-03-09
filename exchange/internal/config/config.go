@@ -13,4 +13,5 @@ type Config struct {
 	Mongo      database.MongoConfig
 	UCenterRpc zrpc.RpcClientConf
 	MarketRpc  zrpc.RpcClientConf
+	Kafka      database.KafkaConfig
 }

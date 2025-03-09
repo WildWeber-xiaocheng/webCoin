@@ -93,3 +93,7 @@ func (old *ExchangeOrder) ToVo() *ExchangeOrderVo {
 	eo.Type = TypeMap.Value(old.Type)
 	return eo
 }
+
+func NewOrder() *ExchangeOrder {
+	return &ExchangeOrder{}
+}

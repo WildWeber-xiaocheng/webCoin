@@ -17,10 +17,13 @@ type ServiceContext struct {
 	MongoClient *database.MongoClient
 	MemberRpc   ucclient.Member
 	MarketRpc   mclient.Market
+	AssetRpc    ucclient.Asset
+	KafkaClient *database.KafkaClient
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	redisCache := cache.New(c.CacheRedis, nil, cache.NewStat("webCoin"), nil, func(o *cache.Options) {})
+	kafkaClient := database.NewKafkaClient(c.Kafka)
 	return &ServiceContext{
 		Config:      c,
 		Cache:       redisCache,
@@ -28,5 +31,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		MongoClient: database.ConnectMongo(c.Mongo),
 		MemberRpc:   ucclient.NewMember(zrpc.MustNewClient(c.UCenterRpc)),
 		MarketRpc:   mclient.NewMarket(zrpc.MustNewClient(c.MarketRpc)),
+		AssetRpc:    ucclient.NewAsset(zrpc.MustNewClient(c.UCenterRpc)),
+		KafkaClient: kafkaClient,
 	}
 }

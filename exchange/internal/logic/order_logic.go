@@ -11,7 +11,10 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"grpc-common/exchange/types/order"
 	"grpc-common/market/types/market"
+	"grpc-common/ucenter/types/asset"
 	"grpc-common/ucenter/types/member"
+	"webCoin-common/msdb"
+	"webCoin-common/msdb/tran"
 )
 
 type ExchangeOrderLogic struct {
@@ -19,6 +22,8 @@ type ExchangeOrderLogic struct {
 	svcCtx *svc.ServiceContext
 	logx.Logger
 	exchangeOrderDomain *domain.ExchangeOrderDomain
+	transaction         tran.Transaction
+	kafkaDomain         *domain.KafkaDomain
 }
 
 func (l *ExchangeOrderLogic) FindOrderHistory(req *order.OrderReq) (*order.OrderRes, error) {
@@ -112,6 +117,96 @@ func (l *ExchangeOrderLogic) Add(req *order.OrderReq) (*order.AddOrderRes, error
 			return nil, errors.New("数量不能低于" + fmt.Sprintf("%f", exchangeCoin.GetMinVolume()))
 		}
 	}
+	//2.查询用户钱包
+	baseWallet, err := l.svcCtx.AssetRpc.FindWalletBySymbol(l.ctx, &asset.AssetReq{
+		UserId:   req.UserId,
+		CoinName: baseSymbol,
+	})
+	if err != nil {
+		return nil, errors.New("no wallet")
+	}
+	exCoinWallet, err := l.svcCtx.AssetRpc.FindWalletBySymbol(l.ctx, &asset.AssetReq{
+		UserId:   req.UserId,
+		CoinName: coinSymbol,
+	})
+	if err != nil {
+		return nil, errors.New("no wallet")
+	}
+	if baseWallet.IsLock == 1 || exCoinWallet.IsLock == 1 {
+		return nil, errors.New("wallet locked")
+	}
+	if req.Direction == model.DirectionMap[model.SELL] && exchangeCoin.GetMinSellPrice() > 0 {
+		if req.Price < exchangeCoin.GetMinSellPrice() || req.Type == model.TypeMap[model.MarketPrice] {
+			return nil, errors.New("不能低于最低限价:" + fmt.Sprintf("%f", exchangeCoin.GetMinSellPrice()))
+		}
+	}
+	if req.Direction == model.DirectionMap[model.BUY] && exchangeCoin.GetMaxBuyPrice() > 0 {
+		if req.Price > exchangeCoin.GetMaxBuyPrice() || req.Type == model.TypeMap[model.MarketPrice] {
+			return nil, errors.New("不能低于最高限价:" + fmt.Sprintf("%f", exchangeCoin.GetMaxBuyPrice()))
+		}
+	}
+	//是否启用了市价买卖
+	if req.Type == model.TypeMap[model.MarketPrice] {
+		if req.Direction == model.DirectionMap[model.BUY] && exchangeCoin.EnableMarketBuy == 0 {
+			return nil, errors.New("不支持市价购买")
+		} else if req.Direction == model.DirectionMap[model.SELL] && exchangeCoin.EnableMarketSell == 0 {
+			return nil, errors.New("不支持市价出售")
+		}
+	}
+	//限制委托数量
+	count, err := l.exchangeOrderDomain.FindCurrentTradingCount(l.ctx, req.UserId, req.Symbol, req.Direction)
+	if err != nil {
+		return nil, err
+	}
+	if exchangeCoin.GetMaxTradingOrder() > 0 && count >= exchangeCoin.GetMaxTradingOrder() {
+		return nil, errors.New("超过最大挂单数量 " + fmt.Sprintf("%d", exchangeCoin.GetMaxTradingOrder()))
+	}
+	//3.开始生成订单
+	exchangeOrder := model.NewOrder()
+	exchangeOrder.MemberId = req.UserId
+	exchangeOrder.Symbol = req.Symbol
+	exchangeOrder.BaseSymbol = baseSymbol
+	exchangeOrder.CoinSymbol = coinSymbol
+	typeCode := model.TypeMap.Code(req.Type)
+	exchangeOrder.Type = typeCode
+	directionCode := model.DirectionMap.Code(req.Direction)
+	exchangeOrder.Direction = directionCode
+	if exchangeOrder.Type == model.MarketPrice { //按照市价买卖，则不按这里的价格买卖，在实际成交的时候算价格
+		exchangeOrder.Price = 0
+	} else {
+		exchangeOrder.Price = req.Price
+	}
+	exchangeOrder.UseDiscount = "0"
+	exchangeOrder.Amount = req.Amount
+	//保存订单到数据库，发送消息到kafka  ucenter的钱包服务接收kafka，进行资金的冻结
+	err = l.transaction.Action(func(conn msdb.DbConn) error {
+		//AddOrder来保存订单，计算所需要的钱
+		money, err := l.exchangeOrderDomain.AddOrder(l.ctx, conn, exchangeOrder, exchangeCoin, baseWallet, exCoinWallet)
+		if err != nil { //返回错误即可回滚
+			return errors.New("订单提交失败")
+		}
+		//通过kafka发送订单消息，进行钱包货币扣除 同步发送 要保证发送成功
+		err = l.kafkaDomain.SendOrderAdd(
+			"add-exchange-order",
+			req.UserId,
+			exchangeOrder.OrderId,
+			money,
+			req.Symbol,
+			exchangeOrder.Direction,
+			baseSymbol,
+			coinSymbol)
+		if err != nil {
+			return errors.New("消息队列出现故障，未能扣款")
+		}
+		logx.Info("发送成功，订单id:", exchangeOrder.OrderId)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &order.AddOrderRes{
+		OrderId: exchangeOrder.OrderId,
+	}, nil
 }
 
 func (l *ExchangeOrderLogic) FindByOrderId(req *order.OrderReq) (*order.ExchangeOrderOrigin, error) {
@@ -128,5 +223,7 @@ func NewExchangeOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Exc
 		svcCtx:              svcCtx,
 		Logger:              logx.WithContext(ctx),
 		exchangeOrderDomain: domain.NewExchangeOrderDomain(svcCtx.Db),
+		transaction:         tran.NewTransaction(svcCtx.Db.Conn),
+		kafkaDomain:         domain.NewKafkaDomain(svcCtx.KafkaClient),
 	}
 }

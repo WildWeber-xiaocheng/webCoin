@@ -11,6 +11,22 @@ type ExchangeOrderDao struct {
 	conn *gorms.GormConn
 }
 
+func (e *ExchangeOrderDao) Save(ctx context.Context, conn msdb.DbConn, order *model.ExchangeOrder) error {
+	e.conn = conn.(*gorms.GormConn)
+	tx := e.conn.Tx(ctx)
+	err := tx.Save(&order).Error
+	return err
+}
+
+func (e *ExchangeOrderDao) FindCurrentTradingCount(ctx context.Context, userId int64, symbol string, direction int) (total int64, err error) {
+	session := e.conn.Session(ctx)
+	err = session.
+		Model(&model.ExchangeOrder{}).
+		Where("symbol = ? and member_id = ? and direction = ? and status = ?", symbol, userId, direction, model.Trading).
+		Count(&total).Error
+	return
+}
+
 func (e *ExchangeOrderDao) FindOrderHistory(ctx context.Context, symbol string, page int64, size int64, memberId int64) (list []*model.ExchangeOrder, total int64, err error) {
 	session := e.conn.Session(ctx)
 	index := (page - 1) * size
