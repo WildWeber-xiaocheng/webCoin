@@ -13,6 +13,12 @@ type MemberWalletDao struct {
 	conn *gorms.GormConn
 }
 
+func (m *MemberWalletDao) FindByMemberId(ctx context.Context, userId int64) (list []*model.MemberWallet, err error) {
+	session := m.conn.Session(ctx)
+	err = session.Model(&model.MemberWallet{}).Where("member_id=?", userId).Find(&list).Error
+	return
+}
+
 func (m *MemberWalletDao) UpdateWallet(ctx context.Context, conn msdb.DbConn, id int64, walletBalance float64, frozenBalance float64) error {
 	gormConn := conn.(*gorms.GormConn)
 	tx := gormConn.Tx(ctx)

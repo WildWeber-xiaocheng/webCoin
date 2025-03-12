@@ -57,6 +57,13 @@ message MemberWallet{
   double toReleased  = 10;
 }
 
+message MemberWalletList{
+  repeated MemberWallet list = 1;
+}
+
+
+
 service Asset {
   rpc findWalletBySymbol(AssetReq) returns(MemberWallet);
+  rpc findWallet(AssetReq) returns(MemberWalletList);
 }

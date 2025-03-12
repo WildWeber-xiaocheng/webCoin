@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AssetClient interface {
 	FindWalletBySymbol(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWallet, error)
+	FindWallet(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWalletList, error)
 }
 
 type assetClient struct {
@@ -42,11 +43,21 @@ func (c *assetClient) FindWalletBySymbol(ctx context.Context, in *AssetReq, opts
 	return out, nil
 }
 
+func (c *assetClient) FindWallet(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWalletList, error) {
+	out := new(MemberWalletList)
+	err := c.cc.Invoke(ctx, "/asset.Asset/findWallet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AssetServer is the server API for Asset service.
 // All implementations must embed UnimplementedAssetServer
 // for forward compatibility
 type AssetServer interface {
 	FindWalletBySymbol(context.Context, *AssetReq) (*MemberWallet, error)
+	FindWallet(context.Context, *AssetReq) (*MemberWalletList, error)
 	mustEmbedUnimplementedAssetServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedAssetServer struct {
 
 func (UnimplementedAssetServer) FindWalletBySymbol(context.Context, *AssetReq) (*MemberWallet, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindWalletBySymbol not implemented")
+}
+func (UnimplementedAssetServer) FindWallet(context.Context, *AssetReq) (*MemberWalletList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindWallet not implemented")
 }
 func (UnimplementedAssetServer) mustEmbedUnimplementedAssetServer() {}
 
@@ -88,6 +102,24 @@ func _Asset_FindWalletBySymbol_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Asset_FindWallet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssetReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AssetServer).FindWallet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/asset.Asset/findWallet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AssetServer).FindWallet(ctx, req.(*AssetReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Asset_ServiceDesc is the grpc.ServiceDesc for Asset service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var Asset_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "findWalletBySymbol",
 			Handler:    _Asset_FindWalletBySymbol_Handler,
+		},
+		{
+			MethodName: "findWallet",
+			Handler:    _Asset_FindWallet_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

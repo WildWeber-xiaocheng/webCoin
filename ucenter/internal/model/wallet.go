@@ -1,6 +1,10 @@
 package model
 
-import "grpc-common/market/types/market"
+import (
+	"github.com/jinzhu/copier"
+	"grpc-common/market/mclient"
+	"grpc-common/market/types/market"
+)
 
 type MemberWallet struct {
 	Id             int64   `gorm:"column:id"`
@@ -18,6 +22,14 @@ type MemberWallet struct {
 
 func (m *MemberWallet) TableName() string {
 	return "member_wallet"
+}
+
+func (m *MemberWallet) Copy(coinInfo *mclient.Coin) *MemberWalletCoin {
+	mc := &MemberWalletCoin{}
+	coin := &market.Coin{}
+	copier.Copy(coin, coinInfo)
+	mc.Coin = coin
+	return mc
 }
 
 type MemberWalletCoin struct {

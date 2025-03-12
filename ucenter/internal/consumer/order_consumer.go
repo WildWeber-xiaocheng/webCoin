@@ -78,7 +78,7 @@ func ExchangeOrderAdd(redisClient *redis.Redis, client *database.KafkaClient, or
 		}
 		if acquireCtx {
 			transaction := tran.NewTransaction(db.Conn)
-			walletDomain := domain.NewMemberWalletDomain(db)
+			walletDomain := domain.NewMemberWalletDomain(db, nil)
 			err = transaction.Action(func(conn msdb.DbConn) error {
 				if addData.Direction == 0 { //买
 					//buy baseSymbol
@@ -212,7 +212,7 @@ func ExchangeOrderComplete(redisCli *redis.Redis, cli *database.KafkaClient, db 
 			continue
 		}
 		logx.Info("收到exchange_order_complete_update_success 消息成功:" + order.OrderId)
-		walletDomain := domain.NewMemberWalletDomain(db)
+		walletDomain := domain.NewMemberWalletDomain(db, nil)
 		//基于redis的分布式锁
 		lock := redis.NewRedisLock(redisCli, fmt.Sprintf("order_complete_update_wallet::%d", order.MemberId))
 		acquire, err := lock.Acquire()

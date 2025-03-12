@@ -31,6 +31,19 @@ func (h AssetHandler) FindWalletBySymbol(w http.ResponseWriter, r *http.Request)
 	httpx.OkJsonCtx(r.Context(), w, result)
 }
 
+func (h AssetHandler) FindWallet(w http.ResponseWriter, r *http.Request) {
+	// 1.获取参数
+	req := types.AssetReq{}
+	ip := tools.GetRemoteClientIp(r)
+	req.Ip = ip
+	// 2.获取用户钱包
+	l := logic.NewAssetLogic(r.Context(), h.svcCtx)
+	resp, err := l.FindWallet(&req)
+	// 3.处理返回数据
+	result := common.NewResult().Deal(resp, err)
+	httpx.OkJsonCtx(r.Context(), w, result)
+}
+
 func NewAssetHandler(svcCtx *svc.ServiceContext) *AssetHandler {
 	return &AssetHandler{svcCtx}
 }

@@ -12,11 +12,13 @@ import (
 )
 
 type (
-	AssetReq     = asset.AssetReq
-	MemberWallet = asset.MemberWallet
+	AssetReq         = asset.AssetReq
+	MemberWallet     = asset.MemberWallet
+	MemberWalletList = asset.MemberWalletList
 
 	Asset interface {
 		FindWalletBySymbol(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWallet, error)
+		FindWallet(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWalletList, error)
 	}
 
 	defaultAsset struct {
@@ -24,13 +26,18 @@ type (
 	}
 )
 
+func (m *defaultAsset) FindWalletBySymbol(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWallet, error) {
+	client := asset.NewAssetClient(m.cli.Conn())
+	return client.FindWalletBySymbol(ctx, in, opts...)
+}
+
+func (m *defaultAsset) FindWallet(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWalletList, error) {
+	client := asset.NewAssetClient(m.cli.Conn())
+	return client.FindWallet(ctx, in, opts...)
+}
+
 func NewAsset(cli zrpc.Client) Asset {
 	return &defaultAsset{
 		cli: cli,
 	}
-}
-
-func (m *defaultAsset) FindWalletBySymbol(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWallet, error) {
-	client := asset.NewAssetClient(m.cli.Conn())
-	return client.FindWalletBySymbol(ctx, in, opts...)
 }
