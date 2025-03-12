@@ -130,6 +130,10 @@ func (d *ExchangeOrderDomain) FindOrderListBySymbol(ctx context.Context, symbol 
 	return d.orderRepo.FindOrderListBySymbol(ctx, symbol, status)
 }
 
+func (d *ExchangeOrderDomain) UpdateOrderComplete(ctx context.Context, order *model.ExchangeOrder) error {
+	return d.orderRepo.UpdateOrderComplete(ctx, order.OrderId, order.TradedAmount, order.Turnover, order.Status)
+}
+
 func NewExchangeOrderDomain(db *msdb.MsDB) *ExchangeOrderDomain {
 	return &ExchangeOrderDomain{orderRepo: dao.NewExchangeOrderDao(db)}
 }

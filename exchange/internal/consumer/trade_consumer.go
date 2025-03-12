@@ -51,6 +51,7 @@ func (k *KafkaConsumer) readOrderTrading(cli *database.KafkaClient) {
 	}
 }
 
+// 从kafka中消费已完成的订单
 func (k *KafkaConsumer) orderComplete(orderDomain *domain.ExchangeOrderDomain) {
 	cli := k.cli.StartRead("exchange_order_complete")
 	go k.readOrderComplete(cli, orderDomain)
@@ -62,9 +63,11 @@ func (k *KafkaConsumer) readOrderComplete(cli *database.KafkaClient, orderDomain
 		var order *model.ExchangeOrder
 		json.Unmarshal(kafkaData.Data, &order)
 		//这个时候 我们需要去更改状态
+		//更新订单的状态
 		err := orderDomain.UpdateOrderComplete(context.Background(), order)
 		if err != nil {
 			logx.Error(err)
+			//将消息重新放进去，等待200ms后再次消费
 			cli.RPut(kafkaData)
 			time.Sleep(200 * time.Millisecond)
 			continue

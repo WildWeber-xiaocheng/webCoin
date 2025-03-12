@@ -760,6 +760,7 @@ func (t *CoinTrade) addLimitQueue(order *model.ExchangeOrder) {
 	}
 }
 
+// 将已完成的订单通过kafka发送出去
 func (t *CoinTrade) sendCompleteOrder(order *model.ExchangeOrder) {
 	if order.Status != model.Completed {
 		return
@@ -770,7 +771,7 @@ func (t *CoinTrade) sendCompleteOrder(order *model.ExchangeOrder) {
 		Key:   []byte(t.symbol),
 		Data:  marshal,
 	}
-	for {
+	for { //重试保证发送成功
 		err := t.kafkaClient.SendSync(kafkaData)
 		if err != nil {
 			logx.Error(err)
