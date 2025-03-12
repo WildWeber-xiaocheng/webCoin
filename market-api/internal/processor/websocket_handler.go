@@ -21,6 +21,9 @@ func (w *WebsocketHandler) HandleTradePlate(symbol string, tp *model.TradePlateR
 }
 
 func (w *WebsocketHandler) HandleTrade(symbol string, data []byte) {
+	//本方法没有实现
+	//本方法原本是在订单交易完成后进入这个这个函数，将订单的数据作为k线的一部分
+	//由于k线的数据来源于第三方，为了保证k线数据的真实性，这里的虚拟交易就不作为k线数据了
 	//TODO implement me
 	panic("implement me")
 }

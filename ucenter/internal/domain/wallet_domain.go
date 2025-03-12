@@ -9,10 +9,12 @@ import (
 	"ucenter/internal/model"
 	"ucenter/internal/repo"
 	"webCoin-common/msdb"
+	"webCoin-common/msdb/tran"
 )
 
 type MemberWalletDomain struct {
 	memberWalletRepo repo.MemberWalletRepo
+	transaction      tran.Transaction
 }
 
 func (d *MemberWalletDomain) FindWalletBySymbol(ctx context.Context, id int64, name string, coin *mclient.Coin) (*model.MemberWalletCoin, error) {
@@ -49,8 +51,31 @@ func (d *MemberWalletDomain) Freeze(ctx context.Context, conn msdb.DbConn, userI
 	return err
 }
 
+func (d *MemberWalletDomain) FindWalletByMemIdAndCoin(ctx context.Context, memberId int64, coinName string) (*model.MemberWallet, error) {
+	memberWallet, err := d.memberWalletRepo.FindByIdAndCoinName(ctx, memberId, coinName)
+	if err != nil {
+		return nil, err
+	}
+	return memberWallet, nil
+}
+
+func (d *MemberWalletDomain) UpdateWalletCoinAndBase(ctx context.Context, baseWallet *model.MemberWallet, coinWallet *model.MemberWallet) error {
+	return d.transaction.Action(func(conn msdb.DbConn) error {
+		err := d.memberWalletRepo.UpdateWallet(ctx, conn, baseWallet.Id, baseWallet.Balance, baseWallet.FrozenBalance)
+		if err != nil {
+			return err
+		}
+		err = d.memberWalletRepo.UpdateWallet(ctx, conn, coinWallet.Id, coinWallet.Balance, coinWallet.FrozenBalance)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
 func NewMemberWalletDomain(db *msdb.MsDB) *MemberWalletDomain {
 	return &MemberWalletDomain{
-		dao.NewMemberWalletDao(db),
+		memberWalletRepo: dao.NewMemberWalletDao(db),
+		transaction:      tran.NewTransaction(db.Conn),
 	}
 }

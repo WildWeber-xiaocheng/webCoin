@@ -29,6 +29,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	conf := c.CacheRedis[0].RedisConf
 	newRedis := redis.MustNewRedis(conf)
 	go consumer.ExchangeOrderAdd(newRedis, kafkaClient, order, mysql)
+	completeCli := kafkaClient.StartReadNew("exchange_order_complete_update_success")
+	go consumer.ExchangeOrderComplete(newRedis, completeCli, mysql)
 	return &ServiceContext{
 		Config:    c,
 		Cache:     redisCache,

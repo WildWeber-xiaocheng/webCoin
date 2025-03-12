@@ -13,9 +13,18 @@ type MemberWalletDao struct {
 	conn *gorms.GormConn
 }
 
+func (m *MemberWalletDao) UpdateWallet(ctx context.Context, conn msdb.DbConn, id int64, walletBalance float64, frozenBalance float64) error {
+	gormConn := conn.(*gorms.GormConn)
+	tx := gormConn.Tx(ctx)
+	//Update
+	updateSql := "update member_wallet set balance=?,frozen_balance=? where id=?"
+	err := tx.Model(&model.MemberWallet{}).Exec(updateSql, walletBalance, frozenBalance, id).Error
+	return err
+}
+
 func (m *MemberWalletDao) UpdateFreeze(ctx context.Context, conn msdb.DbConn, userId int64, money float64, symbol string) error {
-	m.conn = conn.(*gorms.GormConn)
-	session := m.conn.Tx(ctx)
+	gormConn := conn.(*gorms.GormConn)
+	session := gormConn.Tx(ctx)
 	query := "update member_wallet set balance=balance-?,frozen_balance=frozen_balance+? where member_id=? and coin_name=? and balance > ?"
 	exec := session.Exec(query, money, money, userId, symbol, money)
 	err := exec.Error

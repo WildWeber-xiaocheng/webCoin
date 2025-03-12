@@ -57,6 +57,7 @@ func (k *KafkaConsumer) orderComplete(orderDomain *domain.ExchangeOrderDomain) {
 	go k.readOrderComplete(cli, orderDomain)
 }
 
+// 从kafka中消费已完成的订单以及发送消息到kafka，通知钱包信息进行更新
 func (k *KafkaConsumer) readOrderComplete(cli *database.KafkaClient, orderDomain *domain.ExchangeOrderDomain) {
 	for {
 		kafkaData := cli.Read()
@@ -72,8 +73,8 @@ func (k *KafkaConsumer) readOrderComplete(cli *database.KafkaClient, orderDomain
 			time.Sleep(200 * time.Millisecond)
 			continue
 		}
-		//通知钱包更新
-		for {
+		//通知钱包更新，在ucenter的consumer/order_consumer.go进行消息的接收
+		for { //重复发送直至成功
 			kafkaData.Topic = "exchange_order_complete_update_success"
 			err2 := cli.SendSync(kafkaData)
 			if err2 != nil {

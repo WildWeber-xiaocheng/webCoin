@@ -12,8 +12,10 @@ import (
 	"time"
 	"ucenter/internal/database"
 	"ucenter/internal/domain"
+	"webCoin-common/enum"
 	"webCoin-common/msdb"
 	"webCoin-common/msdb/tran"
+	"webCoin-common/op"
 )
 
 type OrderAdd struct {
@@ -134,5 +136,171 @@ func cancelOrder(client *database.KafkaClient, orderRpc eclient.Order,
 	})
 	if err != nil { //订单取消失败，重新放入kafka重新进行消费
 		client.RPut(kafkaData)
+	}
+}
+
+type ExchangeOrder struct {
+	Id            int64   `gorm:"column:id" json:"id"`
+	OrderId       string  `gorm:"column:order_id" json:"orderId"`
+	Amount        float64 `gorm:"column:amount" json:"amount"`
+	BaseSymbol    string  `gorm:"column:base_symbol" json:"baseSymbol"`
+	CanceledTime  int64   `gorm:"column:canceled_time" json:"canceledTime"`
+	CoinSymbol    string  `gorm:"column:coin_symbol" json:"coinSymbol"`
+	CompletedTime int64   `gorm:"column:completed_time" json:"completedTime"`
+	Direction     int     `gorm:"column:direction" json:"direction"`
+	MemberId      int64   `gorm:"column:member_id" json:"memberId"`
+	Price         float64 `gorm:"column:price" json:"price"`
+	Status        int     `gorm:"column:status" json:"status"`
+	Symbol        string  `gorm:"column:symbol" json:"symbol"`
+	Time          int64   `gorm:"column:time" json:"time"`
+	TradedAmount  float64 `gorm:"column:traded_amount" json:"tradedAmount"`
+	Turnover      float64 `gorm:"column:turnover" json:"turnover"`
+	Type          int     `gorm:"column:type" json:"type"`
+	UseDiscount   string  `gorm:"column:use_discount" json:"useDiscount"`
+}
+
+// status
+const (
+	Trading = iota
+	Completed
+	Canceled
+	OverTimed
+	Init
+)
+
+var StatusMap = enum.Enum{
+	Trading:   "TRADING",
+	Completed: "COMPLETED",
+	Canceled:  "CANCELED",
+	OverTimed: "OVERTIMED",
+}
+
+// direction
+const (
+	BUY = iota
+	SELL
+)
+
+var DirectionMap = enum.Enum{
+	BUY:  "BUY",
+	SELL: "SELL",
+}
+
+// type
+const (
+	MarketPrice = iota
+	LimitPrice
+)
+
+var TypeMap = enum.Enum{
+	MarketPrice: "MARKET_PRICE",
+	LimitPrice:  "LIMIT_PRICE",
+}
+
+// 接收kafka的消息（从exchange/internal/consumer/trade_consumer.go中的readOrderComplete函数来的消息）
+// 接收到的消息的是订单已完成，这里要修改用户的钱包信息
+func ExchangeOrderComplete(redisCli *redis.Redis, cli *database.KafkaClient, db *msdb.MsDB) {
+	//先接收消息
+	for {
+		kafkaData := cli.Read()
+		var order *ExchangeOrder
+		json.Unmarshal(kafkaData.Data, &order)
+		if order == nil {
+			continue
+		}
+		if order.Status != Completed {
+			continue
+		}
+		logx.Info("收到exchange_order_complete_update_success 消息成功:" + order.OrderId)
+		walletDomain := domain.NewMemberWalletDomain(db)
+		//基于redis的分布式锁
+		lock := redis.NewRedisLock(redisCli, fmt.Sprintf("order_complete_update_wallet::%d", order.MemberId))
+		acquire, err := lock.Acquire()
+		if err != nil {
+			logx.Error(err)
+			logx.Info("有进程已经拿到锁进行处理了")
+			continue
+		}
+		if acquire {
+			// BTC/USDT
+			ctx := context.Background()
+			if order.Direction == BUY {
+				//买  用baseSymbol
+				baseWallet, err := walletDomain.FindWalletByMemIdAndCoin(ctx, order.MemberId, order.BaseSymbol)
+				if err != nil {
+					logx.Error(err)
+					//重新将数据放入kafka
+					cli.RPut(kafkaData)
+					time.Sleep(250 * time.Millisecond)
+					lock.Release()
+					continue
+				}
+				coinWallet, err := walletDomain.FindWalletByMemIdAndCoin(ctx, order.MemberId, order.CoinSymbol)
+				if err != nil {
+					logx.Error(err)
+					cli.RPut(kafkaData)
+					time.Sleep(250 * time.Millisecond)
+					lock.Release()
+					continue
+				}
+				if order.Type == MarketPrice {
+					//市价买的情况，则amount（以USDT为单位）为冻结的钱  order.turnover是成交额的钱，则需要还回去的钱为amount-order.turnover
+					//冻结的钱进行解冻
+					baseWallet.FrozenBalance = op.SubFloor(baseWallet.FrozenBalance, order.Amount, 8)
+					//剩余没花完的钱还回去
+					baseWallet.Balance = op.AddFloor(baseWallet.Balance, op.SubFloor(order.Amount, order.Turnover, 8), 8)
+					coinWallet.Balance = op.AddFloor(coinWallet.Balance, order.TradedAmount, 8)
+				} else {
+					//限价买的情况，冻结的钱是 order.price*amount  成交了turnover 还回去的钱为order.price*amount-order.turnover
+					floor := op.MulFloor(order.Price, order.Amount, 8)
+					//解冻
+					baseWallet.FrozenBalance = op.SubFloor(baseWallet.FrozenBalance, floor, 8)
+					//剩余没花完的钱还回去
+					baseWallet.Balance = op.AddFloor(baseWallet.Balance, op.SubFloor(floor, order.Turnover, 8), 8)
+					coinWallet.Balance = op.AddFloor(coinWallet.Balance, order.TradedAmount, 8)
+				}
+				err = walletDomain.UpdateWalletCoinAndBase(ctx, baseWallet, coinWallet)
+				if err != nil {
+					logx.Error(err)
+					cli.RPut(kafkaData)
+					time.Sleep(250 * time.Millisecond)
+					lock.Release()
+					continue
+				}
+			} else { //卖
+				//卖 不管是市价还是限价 都是卖的 BTC  解冻amount 得到的钱是 order.turnover
+				coinWallet, err := walletDomain.FindWalletByMemIdAndCoin(ctx, order.MemberId, order.CoinSymbol)
+				if err != nil {
+					logx.Error(err)
+					cli.RPut(kafkaData)
+					time.Sleep(250 * time.Millisecond)
+					lock.Release()
+					continue
+				}
+				baseWallet, err := walletDomain.FindWalletByMemIdAndCoin(ctx, order.MemberId, order.BaseSymbol)
+				if err != nil {
+					logx.Error(err)
+					cli.RPut(kafkaData)
+					time.Sleep(250 * time.Millisecond)
+					lock.Release()
+					continue
+				}
+				//解冻
+				coinWallet.FrozenBalance = op.SubFloor(coinWallet.FrozenBalance, order.Amount, 8)
+				//将成交额加上
+				baseWallet.Balance = op.AddFloor(baseWallet.Balance, order.Turnover, 8)
+				err = walletDomain.UpdateWalletCoinAndBase(ctx, baseWallet, coinWallet)
+				if err != nil {
+					logx.Error(err)
+					cli.RPut(kafkaData)
+					time.Sleep(250 * time.Millisecond)
+					lock.Release()
+					continue
+				}
+			}
+			logx.Info("更新钱包成功:" + order.OrderId)
+			lock.Release()
+		}
+
 	}
 }
