@@ -13,6 +13,15 @@ type ExchangeOrderDao struct {
 	conn *gorms.GormConn
 }
 
+func (e *ExchangeOrderDao) FindOrderListBySymbol(ctx context.Context, symbol string, status int) (list []*model.ExchangeOrder, err error) {
+	session := e.conn.Session(ctx)
+	err = session.Model(&model.ExchangeOrder{}).
+		Where("symbol = ? and status = ?", symbol, status).
+		Find(&list).
+		Error
+	return
+}
+
 func (e *ExchangeOrderDao) UpdateOrderStatusTrading(ctx context.Context, orderId string) error {
 	session := e.conn.Session(ctx)
 	err := session.Model(&model.ExchangeOrder{}).

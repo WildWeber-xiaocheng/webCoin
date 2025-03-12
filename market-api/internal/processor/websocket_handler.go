@@ -2,6 +2,7 @@ package processor
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 	"grpc-common/market/types/market"
@@ -11,6 +12,12 @@ import (
 
 type WebsocketHandler struct {
 	wsServer *ws.WebsocketServer
+}
+
+func (w *WebsocketHandler) HandleTradePlate(symbol string, tp *model.TradePlateResult) {
+	marshal, _ := json.Marshal(tp)
+	logx.Info("====买卖盘通知:", symbol, tp.Direction, ":", fmt.Sprintf("%d", len(tp.Items)))
+	w.wsServer.BroadcastToNamespace("/", "/topic/market/trade-plate/"+symbol, string(marshal))
 }
 
 func (w *WebsocketHandler) HandleTrade(symbol string, data []byte) {

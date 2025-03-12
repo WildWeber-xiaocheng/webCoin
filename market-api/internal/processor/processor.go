@@ -13,10 +13,13 @@ import (
 const KLINE1M = "kline_1m"
 const KLINE = "kline"
 const TRADE = "trade"
+const TradePlateTopic = "exchange_order_trade_plate"
+const TradePlate = "tradePlate"
 
 type MarketHandler interface {
 	HandleTrade(symbol string, data []byte)
 	HandleKLine(symbol string, kline *model.Kline, thumbMap map[string]*market.CoinThumb)
+	HandleTradePlate(symbol string, tp *model.TradePlateResult)
 }
 
 type ProcessData struct {
@@ -53,6 +56,13 @@ func (d *DefaultProcessor) Process(data ProcessData) {
 		for _, v := range d.handlers {
 			v.HandleKLine(symbol, kline, d.thumbMap)
 		}
+	} else if data.Type == TradePlate {
+		symbol := string(data.Key)
+		tp := &model.TradePlateResult{}
+		json.Unmarshal(data.Data, tp)
+		for _, v := range d.handlers {
+			v.HandleTradePlate(symbol, tp)
+		}
 	}
 }
 
@@ -62,7 +72,8 @@ func (d *DefaultProcessor) AddHandler(h MarketHandler) {
 }
 
 func (p *DefaultProcessor) Init(marketRpc mclient.Market) {
-	p.startReadFromKafka(KLINE1M, KLINE)
+	p.startReadFromKafka(KLINE1M, KLINE)   //开启K线数据展示
+	p.startReadTradePlate(TradePlateTopic) //开启买卖盘数据展示
 	p.initThumbMap(marketRpc)
 }
 func (d *DefaultProcessor) GetThumb() any {
@@ -106,4 +117,10 @@ func (d *DefaultProcessor) initThumbMap(marketRpc mclient.Market) {
 			d.thumbMap[v.Symbol] = v
 		}
 	}
+}
+
+// 开启买卖盘kafka数据接收
+func (p *DefaultProcessor) startReadTradePlate(topic string) {
+	cli := p.kafkaCli.StartReadNew(topic)
+	go p.dealQueueData(cli, TradePlate)
 }

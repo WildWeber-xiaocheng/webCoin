@@ -2,7 +2,9 @@ package svc
 
 import (
 	"exchange/internal/config"
+	"exchange/internal/consumer"
 	"exchange/internal/database"
+	"exchange/internal/processor"
 	"github.com/zeromicro/go-zero/core/stores/cache"
 	"github.com/zeromicro/go-zero/zrpc"
 	"grpc-common/market/mclient"
@@ -21,10 +23,17 @@ type ServiceContext struct {
 	KafkaClient *database.KafkaClient
 }
 
+func (sc *ServiceContext) init() {
+	factory := processor.NewCoinTradeFactory()
+	factory.Init(sc.MarketRpc, sc.KafkaClient, sc.Db)
+	kafkaConsumer := consumer.NewKafkaConsumer(sc.KafkaClient, factory, sc.Db)
+	kafkaConsumer.Run()
+}
+
 func NewServiceContext(c config.Config) *ServiceContext {
 	redisCache := cache.New(c.CacheRedis, nil, cache.NewStat("webCoin"), nil, func(o *cache.Options) {})
 	kafkaClient := database.NewKafkaClient(c.Kafka)
-	return &ServiceContext{
+	s := &ServiceContext{
 		Config:      c,
 		Cache:       redisCache,
 		Db:          database.ConnMysql(c.Mysql.DataSource),
@@ -34,4 +43,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		AssetRpc:    ucclient.NewAsset(zrpc.MustNewClient(c.UCenterRpc)),
 		KafkaClient: kafkaClient,
 	}
+	s.init()
+	return s
 }

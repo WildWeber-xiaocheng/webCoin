@@ -136,7 +136,7 @@ func (w *KafkaClient) sendKafka() {
 }
 
 // StartRead 开始读
-func (k *KafkaClient) StartRead(topic string) {
+func (k *KafkaClient) StartRead(topic string) *KafkaClient {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{k.c.Addr},
 		Topic:    topic,
@@ -144,9 +144,11 @@ func (k *KafkaClient) StartRead(topic string) {
 		MinBytes: 10e3, // 10KB
 		MaxBytes: 10e6, // 10MB
 	})
-	k.r = r
-	k.readChan = make(chan KafkaData, k.c.ReadCap)
-	go k.readMsg()
+	client := NewKafkaClient(k.c)
+	client.r = r
+	client.readChan = make(chan KafkaData, k.c.ReadCap)
+	go client.readMsg()
+	return client
 }
 
 func (k *KafkaClient) readMsg() {

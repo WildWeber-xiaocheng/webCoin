@@ -13,17 +13,19 @@ import (
 )
 
 type (
-	MarketReq      = market.MarketReq
-	SymbolThumbRes = market.SymbolThumbRes
-	ExchangeCoin   = market.ExchangeCoin
-	Coin           = market.Coin
-	HistoryRes     = market.HistoryRes
+	MarketReq       = market.MarketReq
+	SymbolThumbRes  = market.SymbolThumbRes
+	ExchangeCoin    = market.ExchangeCoin
+	Coin            = market.Coin
+	HistoryRes      = market.HistoryRes
+	ExchangeCoinRes = market.ExchangeCoinRes
 
 	Market interface {
 		FindSymbolThumbTrend(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*SymbolThumbRes, error)
 		FindSymbolInfo(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*ExchangeCoin, error)
 		FindCoinInfo(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*Coin, error)
 		HistoryKline(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*HistoryRes, error)
+		FindExchangeCoinVisible(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*ExchangeCoinRes, error)
 	}
 
 	defaultMarket struct {
@@ -55,4 +57,9 @@ func (m *defaultMarket) FindCoinInfo(ctx context.Context, in *MarketReq, opts ..
 func (m *defaultMarket) HistoryKline(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*HistoryRes, error) {
 	client := market.NewMarketClient(m.cli.Conn())
 	return client.HistoryKline(ctx, in, opts...)
+}
+
+func (m *defaultMarket) FindExchangeCoinVisible(ctx context.Context, in *MarketReq, opts ...grpc.CallOption) (*ExchangeCoinRes, error) {
+	client := market.NewMarketClient(m.cli.Conn())
+	return client.FindExchangeCoinVisible(ctx, in, opts...)
 }

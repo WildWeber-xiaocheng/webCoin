@@ -14,4 +14,5 @@ type ExchangeOrderRepo interface {
 	FindByOrderId(ctx context.Context, orderId string) (*model.ExchangeOrder, error)
 	UpdateOrderStatusCancel(ctx context.Context, orderId string) error
 	UpdateOrderStatusTrading(ctx context.Context, orderId string) error
+	FindOrderListBySymbol(ctx context.Context, symbol string, status int) ([]*model.ExchangeOrder, error)
 }

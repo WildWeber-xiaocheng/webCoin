@@ -105,8 +105,13 @@ message History {
   double low = 5;
   double volume = 6;
 }
+
 message HistoryRes {
   repeated History list = 1;
+}
+
+message ExchangeCoinRes {
+  repeated ExchangeCoin list = 1;
 }
 
 service Market {
@@ -114,4 +119,5 @@ service Market {
   rpc FindSymbolInfo(MarketReq) returns(ExchangeCoin);
   rpc FindCoinInfo(MarketReq) returns(Coin);
   rpc HistoryKline(MarketReq) returns(HistoryRes);
+  rpc FindExchangeCoinVisible(MarketReq) returns(ExchangeCoinRes);
 }
