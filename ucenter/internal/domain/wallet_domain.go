@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/jinzhu/copier"
+	"github.com/zeromicro/go-zero/core/stores/cache"
 	"grpc-common/market/mclient"
 	"ucenter/internal/dao"
 	"ucenter/internal/model"
@@ -18,6 +19,7 @@ type MemberWalletDomain struct {
 	memberWalletRepo repo.MemberWalletRepo
 	transaction      tran.Transaction
 	marketRpc        mclient.Market
+	redisCache       cache.Cache
 }
 
 func (d *MemberWalletDomain) FindWalletBySymbol(ctx context.Context, id int64, name string, coin *mclient.Coin) (*model.MemberWalletCoin, error) {
@@ -84,7 +86,7 @@ func (d *MemberWalletDomain) FindWallet(ctx context.Context, userId int64) (list
 	}
 	//查询cny的汇率
 	var cnyRateStr string
-	//d.redisCache.Get("USDT::CNY::RATE", &cnyRateStr)
+	d.redisCache.Get("USDT::CNY::RATE", &cnyRateStr)
 	//汇率默认为7
 	var cnyRate float64 = 7
 	if cnyRateStr != "" {
@@ -106,7 +108,7 @@ func (d *MemberWalletDomain) FindWallet(ctx context.Context, userId int64) (list
 			var usdtRateStr string
 			//汇率默认为20000
 			var usdtRate float64 = 20000
-			//d.redisCache.Get(v.CoinName+"::USDT::RATE", &usdtRateStr)
+			d.redisCache.Get(v.CoinName+"::USDT::RATE", &usdtRateStr)
 			if usdtRateStr != "" {
 				usdtRate = tools.ToFloat64(usdtRateStr)
 			}
@@ -118,10 +120,11 @@ func (d *MemberWalletDomain) FindWallet(ctx context.Context, userId int64) (list
 	return list, nil
 }
 
-func NewMemberWalletDomain(db *msdb.MsDB, marketRpc mclient.Market) *MemberWalletDomain {
+func NewMemberWalletDomain(db *msdb.MsDB, marketRpc mclient.Market, redisCache cache.Cache) *MemberWalletDomain {
 	return &MemberWalletDomain{
 		memberWalletRepo: dao.NewMemberWalletDao(db),
 		transaction:      tran.NewTransaction(db.Conn),
 		marketRpc:        marketRpc,
+		redisCache:       redisCache,
 	}
 }

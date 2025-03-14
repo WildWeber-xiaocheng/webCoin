@@ -13,3 +13,6 @@ Kafka:
   Addr: localhost:9092
   WriteCap: 100
   ReadCap: 100
+CacheRedis:
+  Host: 127.0.0.1:6379
+  Type: node

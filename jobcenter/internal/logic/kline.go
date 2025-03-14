@@ -1,11 +1,13 @@
-package kline
+package logic
 
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/zeromicro/go-zero/core/stores/cache"
 	"jobcenter/internal/database"
 	"jobcenter/internal/domain"
 	"log"
+	"strings"
 	"sync"
 	"time"
 	"webCoin-common/tools"
@@ -18,14 +20,16 @@ type Kline struct {
 	c           OkxConfig
 	klineDomain *domain.KlineDomain
 	queueDomain *domain.QueueDomain
+	ch          cache.Cache
 }
 
-func NewKline(c OkxConfig, mongoClient *database.MongoClient, kafkaClient *database.KafkaClient) *Kline {
+func NewKline(c OkxConfig, mongoClient *database.MongoClient, kafkaClient *database.KafkaClient, redisCache cache.Cache) *Kline {
 	return &Kline{
 		wg:          sync.WaitGroup{},
 		c:           c,
 		klineDomain: domain.NewKlineDomain(mongoClient),
 		queueDomain: domain.NewQueueDomain(kafkaClient),
+		ch:          redisCache,
 	}
 }
 
@@ -93,7 +97,12 @@ func (k *Kline) getKlineData(instId string, symbol, period string) {
 			//->kafka->market   kafka消费者消费数据 ->通过websocket通道发送给前端 ->前端更新数据
 			//只有1m间隔的数据 才向kafka发送数据
 			if len(result.Data) > 0 {
-				k.queueDomain.Send1mKline(result.Data[0], symbol, period)
+				data := result.Data[0]
+				k.queueDomain.Send1mKline(data, symbol, period)
+				//放入redis 将其最新的价格  USDT/BTC 转为USDT::BTC
+				key := strings.ReplaceAll(instId, "-", "::")
+				//根据路易api文档，data[4]为收盘价
+				k.ch.Set(key+"::RATE", data[4])
 			}
 		}
 	}
