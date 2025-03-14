@@ -14,7 +14,7 @@ type AssetHandler struct {
 	svcCtx *svc.ServiceContext
 }
 
-func (h AssetHandler) FindWalletBySymbol(w http.ResponseWriter, r *http.Request) {
+func (h *AssetHandler) FindWalletBySymbol(w http.ResponseWriter, r *http.Request) {
 	// 1.获取参数
 	var req types.AssetReq
 	if err := httpx.ParsePath(r, &req); err != nil {
@@ -31,7 +31,7 @@ func (h AssetHandler) FindWalletBySymbol(w http.ResponseWriter, r *http.Request)
 	httpx.OkJsonCtx(r.Context(), w, result)
 }
 
-func (h AssetHandler) FindWallet(w http.ResponseWriter, r *http.Request) {
+func (h *AssetHandler) FindWallet(w http.ResponseWriter, r *http.Request) {
 	// 1.获取参数
 	req := types.AssetReq{}
 	ip := tools.GetRemoteClientIp(r)
@@ -40,6 +40,20 @@ func (h AssetHandler) FindWallet(w http.ResponseWriter, r *http.Request) {
 	l := logic.NewAssetLogic(r.Context(), h.svcCtx)
 	resp, err := l.FindWallet(&req)
 	// 3.处理返回数据
+	result := common.NewResult().Deal(resp, err)
+	httpx.OkJsonCtx(r.Context(), w, result)
+}
+
+func (h *AssetHandler) ResetWalletAddress(w http.ResponseWriter, r *http.Request) {
+	var req = types.AssetReq{}
+	if err := httpx.ParseForm(r, &req); err != nil {
+		httpx.ErrorCtx(r.Context(), w, err)
+		return
+	}
+	ip := tools.GetRemoteClientIp(r)
+	req.Ip = ip
+	l := logic.NewAssetLogic(r.Context(), h.svcCtx)
+	resp, err := l.ResetWalletAddress(&req)
 	result := common.NewResult().Deal(resp, err)
 	httpx.OkJsonCtx(r.Context(), w, result)
 }

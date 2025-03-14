@@ -13,6 +13,13 @@ type MemberWalletDao struct {
 	conn *gorms.GormConn
 }
 
+func (m *MemberWalletDao) UpdateAddress(ctx context.Context, wallet *model.MemberWallet) error {
+	updateSql := "update member_wallet set address=? , address_private_key = ? where id = ?"
+	session := m.conn.Session(ctx)
+	err := session.Model(&model.MemberWallet{}).Exec(updateSql, wallet.Address, wallet.AddressPrivateKey, wallet.Id).Error
+	return err
+}
+
 func (m *MemberWalletDao) FindByMemberId(ctx context.Context, userId int64) (list []*model.MemberWallet, err error) {
 	session := m.conn.Session(ctx)
 	err = session.Model(&model.MemberWallet{}).Where("member_id=?", userId).Find(&list).Error

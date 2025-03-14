@@ -120,6 +120,10 @@ func (d *MemberWalletDomain) FindWallet(ctx context.Context, userId int64) (list
 	return list, nil
 }
 
+func (d *MemberWalletDomain) UpdateAddress(ctx context.Context, wallet *model.MemberWallet) error {
+	return d.memberWalletRepo.UpdateAddress(ctx, wallet)
+}
+
 func NewMemberWalletDomain(db *msdb.MsDB, marketRpc mclient.Market, redisCache cache.Cache) *MemberWalletDomain {
 	return &MemberWalletDomain{
 		memberWalletRepo: dao.NewMemberWalletDao(db),

@@ -15,16 +15,23 @@ type (
 	AssetReq         = asset.AssetReq
 	MemberWallet     = asset.MemberWallet
 	MemberWalletList = asset.MemberWalletList
+	AssetResp        = asset.AssetResp
 
 	Asset interface {
 		FindWalletBySymbol(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWallet, error)
 		FindWallet(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWalletList, error)
+		ResetAddress(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*AssetResp, error)
 	}
 
 	defaultAsset struct {
 		cli zrpc.Client
 	}
 )
+
+func (m *defaultAsset) ResetAddress(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*AssetResp, error) {
+	client := asset.NewAssetClient(m.cli.Conn())
+	return client.ResetAddress(ctx, in, opts...)
+}
 
 func (m *defaultAsset) FindWalletBySymbol(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWallet, error) {
 	client := asset.NewAssetClient(m.cli.Conn())

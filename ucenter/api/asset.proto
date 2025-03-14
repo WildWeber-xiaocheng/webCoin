@@ -61,9 +61,12 @@ message MemberWalletList{
   repeated MemberWallet list = 1;
 }
 
+message AssetResp {}
+
 
 
 service Asset {
   rpc findWalletBySymbol(AssetReq) returns(MemberWallet);
   rpc findWallet(AssetReq) returns(MemberWalletList);
+  rpc resetAddress(AssetReq) returns(AssetResp);
 }
