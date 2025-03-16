@@ -25,6 +25,7 @@ type AssetClient interface {
 	FindWalletBySymbol(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWallet, error)
 	FindWallet(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWalletList, error)
 	ResetAddress(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*AssetResp, error)
+	FindTransaction(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberTransactionList, error)
 }
 
 type assetClient struct {
@@ -62,6 +63,15 @@ func (c *assetClient) ResetAddress(ctx context.Context, in *AssetReq, opts ...gr
 	return out, nil
 }
 
+func (c *assetClient) FindTransaction(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberTransactionList, error) {
+	out := new(MemberTransactionList)
+	err := c.cc.Invoke(ctx, "/asset.Asset/findTransaction", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AssetServer is the server API for Asset service.
 // All implementations must embed UnimplementedAssetServer
 // for forward compatibility
@@ -69,6 +79,7 @@ type AssetServer interface {
 	FindWalletBySymbol(context.Context, *AssetReq) (*MemberWallet, error)
 	FindWallet(context.Context, *AssetReq) (*MemberWalletList, error)
 	ResetAddress(context.Context, *AssetReq) (*AssetResp, error)
+	FindTransaction(context.Context, *AssetReq) (*MemberTransactionList, error)
 	mustEmbedUnimplementedAssetServer()
 }
 
@@ -84,6 +95,9 @@ func (UnimplementedAssetServer) FindWallet(context.Context, *AssetReq) (*MemberW
 }
 func (UnimplementedAssetServer) ResetAddress(context.Context, *AssetReq) (*AssetResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResetAddress not implemented")
+}
+func (UnimplementedAssetServer) FindTransaction(context.Context, *AssetReq) (*MemberTransactionList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindTransaction not implemented")
 }
 func (UnimplementedAssetServer) mustEmbedUnimplementedAssetServer() {}
 
@@ -152,6 +166,24 @@ func _Asset_ResetAddress_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Asset_FindTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssetReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AssetServer).FindTransaction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/asset.Asset/findTransaction",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AssetServer).FindTransaction(ctx, req.(*AssetReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Asset_ServiceDesc is the grpc.ServiceDesc for Asset service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +202,10 @@ var Asset_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "resetAddress",
 			Handler:    _Asset_ResetAddress_Handler,
+		},
+		{
+			MethodName: "findTransaction",
+			Handler:    _Asset_FindTransaction_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

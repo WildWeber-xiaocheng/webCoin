@@ -8,6 +8,7 @@ import (
 	"time"
 	"ucenter-api/internal/svc"
 	"ucenter-api/internal/types"
+	"webCoin-common/pages"
 )
 
 type Asset struct {
@@ -71,4 +72,34 @@ func (l *Asset) ResetWalletAddress(req *types.AssetReq) (string, error) {
 		return "", err
 	}
 	return "", nil
+}
+
+func (l *Asset) FindTransaction(req *types.AssetReq) (*pages.PageResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	value := l.ctx.Value("userId").(int64)
+	mts, err := l.svcCtx.UCAssetRpc.FindTransaction(ctx, &asset.AssetReq{
+		UserId:    value,
+		StartTime: req.StartTime,
+		EndTime:   req.EndTime,
+		Type:      req.Type,
+		Symbol:    req.Symbol,
+		PageNo:    int64(req.PageNo),
+		PageSize:  int64(req.PageSize),
+	})
+	if err != nil {
+		return nil, err
+	}
+	var resp []*types.MemberTransaction
+	if err := copier.Copy(&resp, mts.List); err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		resp = []*types.MemberTransaction{}
+	}
+	b := make([]any, len(resp))
+	for i := range resp {
+		b[i] = resp[i]
+	}
+	return pages.New(b, int64(req.PageNo), int64(req.PageSize), mts.Total), nil
 }

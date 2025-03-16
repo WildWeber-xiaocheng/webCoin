@@ -22,4 +22,5 @@ func RegisterHandlers(r *Routers, serverCtx *svc.ServiceContext) {
 	assetGroup.Post("/uc/asset/wallet/:coinName", asset.FindWalletBySymbol)
 	assetGroup.Post("/uc/asset/wallet", asset.FindWallet)
 	assetGroup.Post("/uc/asset/wallet/reset-address", asset.ResetWalletAddress)
+	assetGroup.Post("/uc/asset/transaction/all", asset.FindTransaction)
 }

@@ -12,21 +12,28 @@ import (
 )
 
 type (
-	AssetReq         = asset.AssetReq
-	MemberWallet     = asset.MemberWallet
-	MemberWalletList = asset.MemberWalletList
-	AssetResp        = asset.AssetResp
+	AssetReq              = asset.AssetReq
+	MemberWallet          = asset.MemberWallet
+	MemberWalletList      = asset.MemberWalletList
+	AssetResp             = asset.AssetResp
+	MemberTransactionList = asset.MemberTransactionList
 
 	Asset interface {
 		FindWalletBySymbol(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWallet, error)
 		FindWallet(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberWalletList, error)
 		ResetAddress(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*AssetResp, error)
+		FindTransaction(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberTransactionList, error)
 	}
 
 	defaultAsset struct {
 		cli zrpc.Client
 	}
 )
+
+func (m *defaultAsset) FindTransaction(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*MemberTransactionList, error) {
+	client := asset.NewAssetClient(m.cli.Conn())
+	return client.FindTransaction(ctx, in, opts...)
+}
 
 func (m *defaultAsset) ResetAddress(ctx context.Context, in *AssetReq, opts ...grpc.CallOption) (*AssetResp, error) {
 	client := asset.NewAssetClient(m.cli.Conn())
